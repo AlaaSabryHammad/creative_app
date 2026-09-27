@@ -6,10 +6,8 @@ import 'widgets.dart';
 import 'screens/dashboard.dart';
 import 'screens/alerts.dart';
 import 'screens/assistant.dart';
-import 'screens/record.dart';
 import 'screens/requests.dart';
-import 'screens/workers.dart';
-import 'screens/payroll.dart';
+import 'screens/workers_hub.dart';
 import 'screens/projects.dart';
 import 'screens/docs.dart';
 import 'screens/vehicles.dart';
@@ -19,7 +17,9 @@ class Module {
   final String key, label;
   final IconData icon;
   final Widget Function() build;
-  const Module(this.key, this.label, this.icon, this.build);
+  final List<String> keys; // permissions that make this menu item visible
+  const Module(this.key, this.label, this.icon, this.build, [List<String>? keys]) : keys = keys ?? const [];
+  bool get visible => (keys.isEmpty ? [key] : keys).any(store.can);
 }
 
 // Same grouping and permission keys as the web sidebar.
@@ -30,11 +30,8 @@ final groups = <(String, List<Module>)>[
   ]),
   ('العمالة والعمل الإضافي', [
     Module('dashboard', 'لوحة الملخص', Icons.space_dashboard_outlined, () => const DashboardScreen()),
-    Module('record', 'تسجيل ساعات إضافية', Icons.add_circle_outline, () => const RecordScreen()),
     Module('requests', 'الطلبات والاعتماد', Icons.fact_check_outlined, () => const RequestsScreen()),
-    Module('workers', 'العمال', Icons.groups_outlined, () => const WorkersScreen()),
-    Module('trades', 'المهن', Icons.handyman_outlined, () => const TradesScreen()),
-    Module('payroll', 'مسيّر الشهر', Icons.receipt_long_outlined, () => const PayrollScreen()),
+    Module('workers', 'العمال', Icons.groups_outlined, () => const WorkersHub(), ['workers', 'record', 'payroll', 'payments']),
   ]),
   ('المشاريع', [Module('projects', 'المشاريع', Icons.apartment_outlined, () => const ProjectsScreen())]),
   ('المنشأة', [
@@ -42,7 +39,7 @@ final groups = <(String, List<Module>)>[
     Module('vehicles', 'السيارات والمعدات', Icons.directions_car_outlined, () => const VehiclesScreen()),
   ]),
   ('النظام', [
-    Module('settings', 'الإعدادات', Icons.settings_outlined, () => const SettingsScreen()),
+    Module('settings', 'الإعدادات', Icons.settings_outlined, () => const SettingsScreen(), ['settings', 'trades']),
     Module('profile', 'ملفي الشخصي', Icons.person_outline, () => const ProfileScreen()),
   ]),
 ];
@@ -56,7 +53,7 @@ class Shell extends StatefulWidget {
 class _ShellState extends State<Shell> {
   String? _cur;
 
-  List<Module> get _allowed => [for (final g in groups) ...g.$2.where((m) => store.can(m.key))];
+  List<Module> get _allowed => [for (final g in groups) ...g.$2.where((m) => m.visible)];
 
   int _badge(String k) {
     final alerts = buildAlerts(docs: store.docs, vehicles: store.vehicles, workers: store.workers, projects: store.projects, days: store.alertDays);
@@ -108,9 +105,9 @@ class _ShellState extends State<Shell> {
           Expanded(
             child: ListView(padding: const EdgeInsets.symmetric(vertical: 8), children: [
               for (final g in groups)
-                if (g.$2.any((m) => store.can(m.key))) ...[
+                if (g.$2.any((m) => m.visible)) ...[
                   Padding(padding: const EdgeInsets.fromLTRB(20, 12, 20, 4), child: Text(g.$1, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: C.slate400))),
-                  for (final m in g.$2.where((m) => store.can(m.key))) _item(context, m, m.key == cur.key),
+                  for (final m in g.$2.where((m) => m.visible)) _item(context, m, m.key == cur.key),
                 ],
             ]),
           ),

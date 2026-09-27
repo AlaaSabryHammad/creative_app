@@ -49,7 +49,10 @@ class EntryCard extends StatelessWidget {
               Text(str(w?['name'] ?? e['workerId']), style: const TextStyle(fontWeight: FontWeight.w800)),
               Text('${str(store.project(str(e['projectId']))?['name'] ?? '—')} · ${str(e['reason'])}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: C.fg3)),
             ])),
-            Pill(statusLabel[st] ?? st, tone: statusTone(st)),
+            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Pill(statusLabel[st] ?? st, tone: statusTone(st)),
+              if (paidSet(store.payments).contains(e['id'])) const Padding(padding: EdgeInsets.only(top: 4), child: Pill('مصروف', tone: Tone.blue, icon: Icons.payments_outlined)),
+            ]),
           ]),
           const SizedBox(height: 10),
           Row(children: [

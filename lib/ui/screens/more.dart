@@ -5,11 +5,29 @@ import '../../core/logic.dart';
 import '../../core/theme.dart';
 import '../../data/store.dart';
 import '../widgets.dart';
+import 'workers.dart';
 
 const webUrl = 'https://overtime.alhemedy.com/#login';
 
+/// Settings: general info + المهن (moved here from the main menu; keeps its own permission).
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final tabs = [if (store.can('settings')) ('الإعدادات العامة', const _GeneralSettings()), if (store.can('trades')) ('المهن', const TradesScreen())];
+    if (tabs.length == 1) return tabs.first.$2;
+    return DefaultTabController(
+      length: tabs.length,
+      child: Column(children: [
+        Material(color: Colors.white, child: TabBar(labelColor: C.primary700, indicatorColor: C.primary, tabs: [for (final t in tabs) Tab(text: t.$1)])),
+        Expanded(child: TabBarView(children: [for (final t in tabs) t.$2])),
+      ]),
+    );
+  }
+}
+
+class _GeneralSettings extends StatelessWidget {
+  const _GeneralSettings();
   @override
   Widget build(BuildContext context) {
     final c = store.company, s = store.settings;

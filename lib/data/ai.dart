@@ -12,6 +12,7 @@ const _assist = '''أنت "مساعد CREATIVE" الذكي لنظام إدارة
 
 Json _snapshot(Store s) {
   final t = boqTotals;
+  final paid = paidSet(s.payments);
   return {
     'today': todayIso(),
     'company': {'name': s.company['name'], 'city': s.company['city']},
@@ -23,9 +24,10 @@ Json _snapshot(Store s) {
     'trades': s.trades,
     'workers': s.workers.map((w) => {'id': w['id'], 'name': w['name'], 'trade': w['trade'], 'hourlyRate': w['rate'], 'project': w['p'], 'nationality': w['nat'], 'active': w['active'], 'iqamaExpiry': w['iqamaExpiry'] ?? ''}).toList(),
     'overtime': {
-      'columns': ['id', 'date', 'workerId', 'projectId', 'hours', 'amount', 'status', 'reason'],
-      'rows': s.entries.map((e) => [e['id'], e['date'], e['workerId'], e['projectId'], e['hours'], otAmount(e, s.workers).round(), e['status'], e['reason']]).toList(),
+      'columns': ['id', 'date', 'workerId', 'projectId', 'hours', 'amount', 'status', 'paid', 'reason'],
+      'rows': s.entries.map((e) => [e['id'], e['date'], e['workerId'], e['projectId'], e['hours'], otAmount(e, s.workers).round(), e['status'], paid.contains(e['id']), e['reason']]).toList(),
     },
+    'overtimePayouts': s.payments.map((p) => {'id': p['id'], 'from': p['from'], 'to': p['to'], 'paidOn': p['date'], 'method': p['method'], 'total': p['total'], 'items': p['items']}).toList(),
     'documents': s.docs.map((d) => {...d, 'files': ((d['files'] as List?) ?? []).map((f) => f['name']).toList()}).toList(),
     'vehicles': s.vehicles.map((v) => {...v, 'files': ((v['files'] as List?) ?? []).map((f) => f['name']).toList()}).toList(),
   };

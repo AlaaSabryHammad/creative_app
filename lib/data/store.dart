@@ -31,6 +31,7 @@ class Store extends ChangeNotifier {
   List<Json> get trades => list('trades');
   List<Json> get docs => list('docs');
   List<Json> get vehicles => list('vehicles');
+  List<Json> get payments => list('payments');
   Json get lookups => obj('lookups');
   Json get settings => obj('settings');
   Json get company => obj('company');

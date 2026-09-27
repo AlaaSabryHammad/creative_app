@@ -47,4 +47,24 @@ void main() {
     expect(filled, empty - 4);
     expect(vehicleIssues({'status': 'maint', 'type': 'بيك أب'}).any((t) => t.contains('نوع')), isFalse);
   });
+
+  test('payroll and payout balances: paid vs remaining in a period', () {
+    final workers = [{'id': 'W-1', 'rate': 20}, {'id': 'W-2', 'rate': 18}];
+    final entries = [
+      {'id': 'OT-1', 'workerId': 'W-1', 'date': '2026-09-01', 'hours': 3, 'status': 'approved', 'dayType': 'normal'},
+      {'id': 'OT-2', 'workerId': 'W-1', 'date': '2026-09-05', 'hours': 2, 'status': 'approved', 'dayType': 'friday'},
+      {'id': 'OT-3', 'workerId': 'W-2', 'date': '2026-09-05', 'hours': 4, 'status': 'approved', 'dayType': 'normal'},
+      {'id': 'OT-4', 'workerId': 'W-2', 'date': '2026-09-06', 'hours': 2, 'status': 'pending', 'dayType': 'normal'},
+      {'id': 'OT-5', 'workerId': 'W-2', 'date': '2026-08-20', 'hours': 6, 'status': 'approved', 'dayType': 'normal'},
+    ];
+    final paid = paidSet([{'entryIds': ['OT-1']}]);
+    final (from, to) = monthRange('2026-09');
+    final month = balances(entries, workers, paid, from: from, to: to);
+    double sum(double Function(Balance) f) => month.fold(0, (a, b) => a + f(b));
+    expect(sum((b) => b.hours), 9);
+    expect(sum((b) => b.amount), 172);
+    expect(sum((b) => b.paid), 60);
+    expect(sum((b) => b.rem), 112);
+    expect(balances(entries, workers, paid).fold<double>(0, (a, b) => a + b.hours), 15); // all periods
+  });
 }
