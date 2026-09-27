@@ -67,8 +67,8 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
         ]),
         const SizedBox(height: 10),
         Wrap(spacing: 14, runSpacing: 4, children: [
-          Row(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.person_outline, size: 15, color: C.slate400), const SizedBox(width: 4), Text(str(store.worker(str(v['driver']))?['name']).isEmpty ? 'بدون سائق' : str(store.worker(str(v['driver']))?['name']), style: const TextStyle(fontSize: 12.5))]),
-          Row(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.apartment_outlined, size: 15, color: C.slate400), const SizedBox(width: 4), Text(str(store.project(str(v['project']))?['name']).isEmpty ? 'غير مخصصة لمشروع' : str(store.project(str(v['project']))?['name']), style: const TextStyle(fontSize: 12.5))]),
+          IconText(Icons.person_outline, str(store.worker(str(v['driver']))?['name']).isEmpty ? 'بدون سائق' : str(store.worker(str(v['driver']))?['name'])),
+          IconText(Icons.apartment_outlined, str(store.project(str(v['project']))?['name']).isEmpty ? 'غير مخصصة لمشروع' : str(store.project(str(v['project']))?['name'])),
         ]),
         const SizedBox(height: 10),
         Row(children: [

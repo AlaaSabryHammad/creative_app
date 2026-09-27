@@ -92,7 +92,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     );
   }
 
-  Widget _meta(IconData i, String t) => Row(mainAxisSize: MainAxisSize.min, children: [Icon(i, size: 15, color: C.slate400), const SizedBox(width: 4), Text(t, style: const TextStyle(fontSize: 12.5, color: C.fg2))]);
+  Widget _meta(IconData i, String t) => IconText(i, t);
   Widget _box(String k, String v) => Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(border: Border.all(color: C.slate100), borderRadius: BorderRadius.circular(12)),

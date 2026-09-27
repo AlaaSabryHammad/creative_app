@@ -269,3 +269,16 @@ class FilterChips extends StatelessWidget {
         ]),
       );
 }
+
+/// Small icon + one-line text that ellipsizes instead of overflowing (safe inside Wrap/Row).
+class IconText extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const IconText(this.icon, this.text, {super.key});
+  @override
+  Widget build(BuildContext context) => Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 15, color: C.slate400),
+        const SizedBox(width: 4),
+        Flexible(child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, color: C.fg2))),
+      ]);
+}
