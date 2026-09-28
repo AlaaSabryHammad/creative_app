@@ -61,19 +61,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(color: C.goldLight, borderRadius: BorderRadius.circular(99)),
-                          child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.verified_user_outlined, size: 15, color: C.gold), SizedBox(width: 6), Text('بوابة الموظفين', style: TextStyle(color: C.gold, fontWeight: FontWeight.w700, fontSize: 12.5))]),
+                          child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.verified_user_outlined, size: 15, color: C.gold), SizedBox(width: 6), Text('بوابة الموظفين والعمال', style: TextStyle(color: C.gold, fontWeight: FontWeight.w700, fontSize: 12.5))]),
                         ),
                       ),
                       const SizedBox(height: 14),
                       const Text('مرحبًا بعودتك', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: C.ink)),
-                      const Text('سجّل الدخول للوصول إلى لوحة إدارة المنشأة.', style: TextStyle(color: C.fg3)),
+                      const Text('للموظفين والمشرفين والعمال.', style: TextStyle(color: C.fg3)),
                       const SizedBox(height: 20),
                       TextField(
                         controller: _email,
                         keyboardType: TextInputType.emailAddress,
                         textDirection: TextDirection.ltr,
                         autofillHints: const [AutofillHints.username, AutofillHints.email],
-                        decoration: const InputDecoration(labelText: 'البريد الإلكتروني', prefixIcon: Icon(Icons.mail_outline)),
+                        decoration: const InputDecoration(labelText: 'البريد الإلكتروني أو رقم الهوية / الإقامة', helperText: 'Workers: iqama / ID number · عمال: رقم الإقامة', prefixIcon: Icon(Icons.person_outline)),
                       ),
                       const SizedBox(height: 12),
                       TextField(

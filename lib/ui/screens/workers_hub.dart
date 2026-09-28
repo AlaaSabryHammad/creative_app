@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../data/store.dart';
+import 'deductions.dart';
 import 'payments.dart';
 import 'payroll.dart';
 import 'record.dart';
 import 'workers.dart';
 
-/// العمال section: workers + record overtime + monthly payroll + payouts, each gated by its own permission.
+/// العمال section: workers, overtime, deductions, salary payroll and overtime payouts, each gated by its own permission.
 class WorkersHub extends StatelessWidget {
   const WorkersHub({super.key});
   static final tabs = <(String, String, IconData, Widget Function())>[
     ('workers', 'العمال', Icons.groups_outlined, () => const WorkersScreen()),
-    ('record', 'تسجيل ساعات', Icons.add_circle_outline, () => const RecordScreen()),
-    ('payroll', 'مسيّر الشهر', Icons.receipt_long_outlined, () => const PayrollScreen()),
+    ('record', 'تسجيل إضافي', Icons.add_circle_outline, () => const RecordScreen()),
+    ('deductions', 'الخصومات', Icons.remove_circle_outline, () => const DeductionsScreen()),
+    ('payroll', 'مسيّر الرواتب', Icons.receipt_long_outlined, () => const PayrollScreen()),
     ('payments', 'صرف الإضافي', Icons.payments_outlined, () => const PaymentsScreen()),
   ];
   @override

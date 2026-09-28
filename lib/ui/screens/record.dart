@@ -5,7 +5,7 @@ import '../../core/theme.dart';
 import '../../data/store.dart';
 import '../widgets.dart';
 
-/// Record overtime: hours per worker, paid at the worker's hourly rate only.
+/// Record overtime: hours per worker × the worker's overtime rate (w['rate'] is the effective rate).
 class RecordScreen extends StatefulWidget {
   const RecordScreen({super.key});
   @override
@@ -143,13 +143,13 @@ class _RecordScreenState extends State<RecordScreen> {
       return;
     }
     setState(() => _busy = true);
-    var n = store.entries.fold<int>(0, (m, e) => (int.tryParse(str(e['id']).replaceAll('OT-', '')) ?? 0) > m ? int.parse(str(e['id']).replaceAll('OT-', '')) : m);
     final reason = _note.text.trim().isEmpty ? _reason : '$_reason — ${_note.text.trim()}';
+    // Ids (OT-0001…) come from the database; the worker's current overtime rate is saved on each record.
     final added = [
       for (final w in chosen)
-        {'id': 'OT-${'${++n}'.padLeft(4, '0')}', 'workerId': w['id'], 'projectId': _project, 'date': _date, 'hours': _sel[w['id']], 'dayType': dt, 'mult': 1, 'reason': reason, 'status': 'pending', 'note': '', 'by': store.me?['name']},
+        {'workerId': w['id'], 'projectId': _project, 'date': _date, 'hours': _sel[w['id']], 'dayType': dt, 'rate': w['rate'], 'reason': reason, 'status': 'pending', 'note': '', 'by': store.myName},
     ];
-    final err = await store.save('entries', [...added, ...store.entries]);
+    final err = await store.insertOt(added);
     if (!mounted) return;
     setState(() { _busy = false; if (err == null) { _sel.clear(); _note.clear(); } });
     toast(context, err ?? 'تم إرسال ${added.length} سجل للاعتماد.', bad: err != null);

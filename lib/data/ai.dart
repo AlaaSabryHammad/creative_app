@@ -12,7 +12,7 @@ const _assist = '''أنت "مساعد CREATIVE" الذكي لنظام إدارة
 
 Json _snapshot(Store s) {
   final t = boqTotals;
-  final paid = paidSet(s.payments);
+  final paid = s.paidIds;
   return {
     'today': todayIso(),
     'company': {'name': s.company['name'], 'city': s.company['city']},

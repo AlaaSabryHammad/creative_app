@@ -26,7 +26,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
   @override
   Widget build(BuildContext context) {
     final payments = store.payments;
-    final paid = paidSet(payments);
+    final paid = store.paidIds;
     final (from, to) = _dates;
     final rows = balances(store.entries, store.workers, paid, from: from, to: to, proj: _proj)..sort((a, b) => b.rem.compareTo(a.rem));
     double sum(double Function(Balance) f) => rows.fold(0, (a, b) => a + f(b));
@@ -230,7 +230,7 @@ class _PayoutFormState extends State<PayoutForm> {
   @override
   void initState() {
     super.initState();
-    final paid = paidSet(store.payments);
+    final paid = store.paidIds;
     final earliest = store.entries.where((e) => e['status'] == 'approved' && !paid.contains(e['id'])).fold<String>(todayIso(), (m, e) => str(e['date']).compareTo(m) < 0 ? str(e['date']) : m);
     final monthStart = '${monthIso()}-01';
     _from = widget.preset != null || earliest.compareTo(monthStart) < 0 ? earliest : monthStart;
@@ -238,7 +238,7 @@ class _PayoutFormState extends State<PayoutForm> {
 
   @override
   Widget build(BuildContext context) {
-    final paid = paidSet(store.payments);
+    final paid = store.paidIds;
     bool inRange(Json e) => str(e['date']).compareTo(_from) >= 0 && str(e['date']).compareTo(_to) <= 0 && (_proj == 'all' || e['projectId'] == _proj) && (widget.preset == null || e['workerId'] == widget.preset);
     final due = store.entries.where((e) => e['status'] == 'approved' && !paid.contains(e['id']) && inRange(e)).toList();
     final pendingN = store.entries.where((e) => e['status'] == 'pending' && inRange(e)).length;

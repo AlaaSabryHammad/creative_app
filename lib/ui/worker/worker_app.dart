@@ -1,0 +1,526 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' show DateFormat;
+import '../../core/i18n.dart';
+import '../../core/logic.dart';
+import '../../core/pay.dart';
+import '../../core/theme.dart';
+import '../../data/store.dart';
+import '../screens/payroll.dart' show SlipDetails;
+import '../widgets.dart';
+
+/// The worker's own app: their attendance, overtime, pay, requests and details — nothing about anyone else.
+String sar(num v) => '${fmtNum(round2(v))} ${tr('sar')}';
+String wDate(String d, {bool year = false}) => d.isEmpty ? '—' : DateFormat(year ? 'd MMM y' : 'd MMM', lang).format(DateTime.parse(d));
+String wMonth(String ym) => DateFormat('MMMM y', lang).format(DateTime.parse('$ym-01'));
+const _att = {'present': Tone.green, 'absent': Tone.red, 'leave': Tone.blue, 'sick': Tone.orange, 'off': Tone.slate};
+Tone _st(String s) => s == 'approved' ? Tone.green : s == 'rejected' ? Tone.red : Tone.orange;
+Set<String> get _paidOt => {...((store.mine['paidOt'] as List?) ?? const []).map((e) => '$e'), for (final e in store.entries) if (str(e['paidBy']).isNotEmpty) str(e['id'])};
+
+class WorkerShell extends StatefulWidget {
+  const WorkerShell({super.key});
+  @override
+  State<WorkerShell> createState() => _WorkerShellState();
+}
+
+class _WorkerShellState extends State<WorkerShell> {
+  int _tab = 0;
+  @override
+  Widget build(BuildContext context) {
+    final pending = store.myReq.where((r) => r['status'] == 'pending').length;
+    final tabs = [const _Home(), const _Attendance(), const _Pay(), const _Requests(), const _Account()];
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(str(store.mine['company']?['name']).isEmpty ? 'CREATIVE' : str(store.mine['company']['name']), maxLines: 1, overflow: TextOverflow.ellipsis),
+        actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: () => store.refresh())],
+      ),
+      body: RefreshIndicator(onRefresh: store.refresh, child: tabs[_tab]),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _tab,
+        onDestinationSelected: (i) => setState(() => _tab = i),
+        destinations: [
+          NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: tr('home')),
+          NavigationDestination(icon: const Icon(Icons.calendar_month_outlined), selectedIcon: const Icon(Icons.calendar_month), label: tr('attendance')),
+          NavigationDestination(icon: const Icon(Icons.account_balance_wallet_outlined), selectedIcon: const Icon(Icons.account_balance_wallet), label: tr('pay')),
+          NavigationDestination(icon: Badge(isLabelVisible: pending > 0, label: Text('$pending'), child: const Icon(Icons.inbox_outlined)), label: tr('requests')),
+          NavigationDestination(icon: const Icon(Icons.person_outline), selectedIcon: const Icon(Icons.person), label: tr('account')),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------- Home ----------------
+
+class _Home extends StatelessWidget {
+  const _Home();
+  @override
+  Widget build(BuildContext context) {
+    final w = store.myWorker, p = store.pay, month = monthIso();
+    final slip = payslip(worker: w, month: month, attendance: store.myAtt, overtime: store.entries, deductions: store.myDed, advances: store.myAdv, paidOtIds: _paidOt, s: p);
+    final days = Map<String, dynamic>.from(slip['days'] as Map), ot = slip['overtime'] as Map, meals = slip['meals'] as Map;
+    final leave = leaveBalance(w, [for (final a in store.myAtt) if (a['status'] == 'leave') str(a['date'])], p, todayIso());
+    final iq = str(w['iqamaExpiry']).isEmpty ? null : daysLeft(str(w['iqamaExpiry']));
+    final award = gratuity(w, todayIso());
+    final project = store.mine['project'] as Map?, vehicle = store.mine['vehicle'] as Map?;
+    Widget row(String l, num v, {bool neg = false}) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(children: [Expanded(child: Text(l, style: const TextStyle(color: C.fg2))), Text('${neg && v > 0 ? '− ' : ''}${sar(v)}', style: TextStyle(fontWeight: FontWeight.w700, color: neg && v > 0 ? C.danger : C.fg1))]),
+        );
+    return ListView(padding: const EdgeInsets.all(16), children: [
+      CardBox(
+        child: Row(children: [
+          WorkerPhoto(w['photo'], size: 64),
+          const SizedBox(width: 14),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('${tr('hello')}،', style: const TextStyle(color: C.fg3)),
+            Text(str(w['name']), style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+            Text('${w['id']} · ${str(w['trade'])}', style: const TextStyle(color: C.fg3)),
+            if (project != null) IconText(Icons.apartment_outlined, str(project['name'])),
+            if (vehicle != null) IconText(Icons.directions_car_outlined, '${vehicle['plate']} · ${str(vehicle['make'])} ${str(vehicle['model'])}'),
+          ])),
+        ]),
+      ),
+      if (iq != null && iq <= 30)
+        Container(
+          margin: const EdgeInsets.only(top: 12),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: iq < 0 ? C.danger50 : C.warning50, borderRadius: BorderRadius.circular(14)),
+          child: Row(children: [Icon(Icons.badge_outlined, color: iq < 0 ? C.danger : C.warning), const SizedBox(width: 8), Expanded(child: Text(iq < 0 ? tr('iqamaExpired', -iq) : tr('iqamaSoon', iq), style: const TextStyle(fontWeight: FontWeight.w700)))]),
+        ),
+      SectionTitle('${tr('thisMonth')} — ${wMonth(month)}'),
+      CardBox(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: [
+            Expanded(child: Text(tr('net'), style: const TextStyle(fontWeight: FontWeight.w700))),
+            Text(sar(toNum(slip['net'])), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: C.primary700)),
+          ]),
+          const Divider(height: 20),
+          row(tr('salary'), toNum(slip['base'])),
+          row('${tr('overtime')} (${fmtNum(toNum(ot['hours']))} ${tr('h')})', toNum(ot['amount'])),
+          row('${tr('meals')} (${meals['breakfast']} + ${meals['lunch']})', toNum(meals['amount'])),
+          row(tr('totalDeductions'), toNum(slip['totalDeductions']), neg: true),
+          const SizedBox(height: 6),
+          Text(tr('estimate'), style: const TextStyle(fontSize: 12, color: C.fg3)),
+        ]),
+      ),
+      const SizedBox(height: 12),
+      StatGrid([
+        StatTile(tone: Tone.green, icon: Icons.how_to_reg_outlined, label: tr('present'), value: '${days['present']}', sub: '${tr('absent')} ${days['absent']}'),
+        StatTile(tone: Tone.blue, icon: Icons.luggage_outlined, label: tr('leaveBalance'), value: '${fmtNum(leave)} ${tr('days')}'),
+      ]),
+      if (award != null) ...[
+        const SizedBox(height: 10),
+        CardBox(
+          child: Row(children: [
+            const Icon(Icons.workspace_premium_outlined, color: C.gold, size: 30),
+            const SizedBox(width: 12),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(tr('gratuity'), style: const TextStyle(fontWeight: FontWeight.w800)),
+              Text(tr('gratuityNote', fmtNum(award.years)), style: const TextStyle(fontSize: 12, color: C.fg3)),
+            ])),
+            Text(sar(award.amount), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+          ]),
+        ),
+      ],
+      if (store.mySlips.isNotEmpty) ...[
+        SectionTitle(tr('lastPayslip')),
+        _SlipTile(store.mySlips.first),
+      ],
+    ]);
+  }
+}
+
+class _SlipTile extends StatelessWidget {
+  final Json s;
+  const _SlipTile(this.s);
+  @override
+  Widget build(BuildContext context) {
+    final data = Map<String, dynamic>.from(s['data'] as Map);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: CardBox(
+        onTap: () => showModalBottomSheet(context: context, isScrollControlled: true, builder: (_) => SlipDetails(data, tr: (k, ar) => tr(k))),
+        child: Row(children: [
+          const Icon(Icons.receipt_long_outlined, color: C.primary),
+          const SizedBox(width: 10),
+          Expanded(child: Text(wMonth(str(s['month'])), style: const TextStyle(fontWeight: FontWeight.w800))),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Text(sar(toNum(s['net'])), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+            Pill(s['paid'] == true ? tr('paid') : tr('unpaid'), tone: s['paid'] == true ? Tone.green : Tone.slate),
+          ]),
+        ]),
+      ),
+    );
+  }
+}
+
+// ---------------- Attendance calendar ----------------
+
+class _Attendance extends StatefulWidget {
+  const _Attendance();
+  @override
+  State<_Attendance> createState() => _AttendanceState();
+}
+
+class _AttendanceState extends State<_Attendance> {
+  String _month = monthIso();
+  @override
+  Widget build(BuildContext context) {
+    final (first, last, n) = monthBounds(_month);
+    final rows = {for (final a in store.myAtt) if (str(a['date']).compareTo(first) >= 0 && str(a['date']).compareTo(last) <= 0) str(a['date']): a};
+    final ot = {for (final e in store.entries) if (str(e['date']).startsWith(_month) && e['status'] != 'rejected') str(e['date']): e};
+    final offset = DateTime.parse(first).weekday % 7; // Sunday first
+    int count(String s) => rows.values.where((a) => a['status'] == s).length;
+    return ListView(padding: const EdgeInsets.all(16), children: [
+      Row(children: [
+        IconButton(onPressed: () => setState(() => _month = addMonths(_month, -1)), icon: const Icon(Icons.chevron_left)),
+        Expanded(child: Text(wMonth(_month), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16))),
+        IconButton(onPressed: _month.compareTo(monthIso()) >= 0 ? null : () => setState(() => _month = addMonths(_month, 1)), icon: const Icon(Icons.chevron_right)),
+      ]),
+      CardBox(
+        padding: const EdgeInsets.all(10),
+        child: GridView.count(
+          crossAxisCount: 7,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 6,
+          crossAxisSpacing: 6,
+          children: [
+            for (var i = 0; i < offset; i++) const SizedBox(),
+            for (var d = 1; d <= n; d++)
+              () {
+                final date = '$_month-${'$d'.padLeft(2, '0')}';
+                final a = rows[date];
+                final tone = a == null ? null : _att[a['status']];
+                return Container(
+                  decoration: BoxDecoration(color: tone?.bg ?? C.slate50, borderRadius: BorderRadius.circular(10), border: date == todayIso() ? Border.all(color: C.primary, width: 1.5) : null),
+                  child: Stack(children: [
+                    Center(child: Text('$d', style: TextStyle(fontWeight: FontWeight.w800, color: tone?.fg ?? C.slate400))),
+                    if (a?['breakfast'] == true || a?['lunch'] == true) const Positioned(bottom: 2, left: 0, right: 0, child: Icon(Icons.restaurant, size: 10, color: C.fg3)),
+                    if (ot[date] != null) const Positioned(top: 2, right: 3, child: Icon(Icons.bolt, size: 11, color: C.primary)),
+                  ]),
+                );
+              }(),
+          ],
+        ),
+      ),
+      const SizedBox(height: 10),
+      Wrap(spacing: 6, runSpacing: 6, children: [
+        for (final s in _att.keys) Pill('${tr(s)} ${count(s)}', tone: _att[s]!),
+        Pill(tr('overtime'), icon: Icons.bolt, tone: Tone.blue),
+        Pill(tr('meals'), icon: Icons.restaurant),
+      ]),
+      const SizedBox(height: 10),
+      if (rows.isEmpty) CardBox(child: EmptyState(tr('noData'))),
+      for (final a in rows.values.toList()..sort((x, y) => str(y['date']).compareTo(str(x['date']))))
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: CircleAvatar(backgroundColor: _att[a['status']]?.bg, child: Text(str(a['date']).substring(8), style: TextStyle(color: _att[a['status']]?.fg, fontWeight: FontWeight.w800))),
+          title: Text(tr(str(a['status']))),
+          subtitle: Text([if (a['breakfast'] == true) tr('breakfast'), if (a['lunch'] == true) tr('lunch'), if (ot[a['date']] != null) '${tr('overtime')} ${fmtNum(toNum(ot[a['date']]!['hours']))} ${tr('h')}'].join(' · ')),
+          trailing: Text(wDate(str(a['date'])), style: const TextStyle(color: C.fg3)),
+        ),
+    ]);
+  }
+}
+
+// ---------------- Pay: payslips, overtime, deductions, advances ----------------
+
+class _Pay extends StatefulWidget {
+  const _Pay();
+  @override
+  State<_Pay> createState() => _PayState();
+}
+
+class _PayState extends State<_Pay> {
+  String _v = 'slips';
+  @override
+  Widget build(BuildContext context) {
+    final paid = _paidOt;
+    final ot = [...store.entries]..sort((a, b) => str(b['date']).compareTo(str(a['date'])));
+    final ded = [...store.myDed]..sort((a, b) => str(b['date']).compareTo(str(a['date'])));
+    return ListView(padding: const EdgeInsets.all(16), children: [
+      FilterChips(items: [('slips', tr('payslips')), ('ot', tr('overtime')), ('ded', tr('deductions')), ('adv', tr('advances'))], value: _v, onChanged: (v) => setState(() => _v = v)),
+      const SizedBox(height: 12),
+      if (_v == 'slips') ...[
+        if (store.mySlips.isEmpty) CardBox(child: EmptyState(tr('noPayslips'))),
+        for (final s in store.mySlips) _SlipTile(s),
+      ],
+      if (_v == 'ot') ...[
+        if (ot.isEmpty) CardBox(child: EmptyState(tr('noData'))),
+        for (final e in ot)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: CardBox(
+              child: Row(children: [
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(wDate(str(e['date']), year: true), style: const TextStyle(fontWeight: FontWeight.w800)),
+                  Text('${fmtNum(toNum(e['hours']))} ${tr('h')} × ${fmtNum(toNum(e['rate']))}', style: const TextStyle(color: C.fg3)),
+                ])),
+                Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                  Text(sar(otAmount(e)), style: const TextStyle(fontWeight: FontWeight.w800)),
+                  Pill(paid.contains(e['id']) ? tr('paid') : tr(str(e['status'])), tone: paid.contains(e['id']) ? Tone.blue : _st(str(e['status']))),
+                ]),
+              ]),
+            ),
+          ),
+      ],
+      if (_v == 'ded') ...[
+        if (ded.isEmpty) CardBox(child: EmptyState(tr('noData'))),
+        for (final d in ded)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: CardBox(
+              child: Row(children: [
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(str(d['reason']), style: const TextStyle(fontWeight: FontWeight.w700)),
+                  Text('${wDate(str(d['date']), year: true)}${d['kind'] == 'hours' ? ' · ${fmtNum(toNum(d['hours']))} ${tr('h')}' : ''}', style: const TextStyle(color: C.fg3)),
+                ])),
+                Text('− ${sar(toNum(d['amount']))}', style: const TextStyle(fontWeight: FontWeight.w800, color: C.danger)),
+              ]),
+            ),
+          ),
+      ],
+      if (_v == 'adv') ...[
+        if (store.myAdv.isEmpty) CardBox(child: EmptyState(tr('noData'))),
+        for (final a in store.myAdv)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: CardBox(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Row(children: [
+                  Expanded(child: Text(sar(toNum(a['amount'])), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800))),
+                  Text('${tr('remaining')}: ${sar(toNum(a['amount']) - toNum(a['repaid']))}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                ]),
+                const SizedBox(height: 8),
+                ProgressBar(toNum(a['amount']) > 0 ? toNum(a['repaid']) / toNum(a['amount']) * 100 : 0),
+                const SizedBox(height: 6),
+                Text('${tr('installment')}: ${sar(toNum(a['installment']))} · ${tr('repaid')}: ${sar(toNum(a['repaid']))}', style: const TextStyle(color: C.fg3, fontSize: 12.5)),
+              ]),
+            ),
+          ),
+      ],
+    ]);
+  }
+}
+
+// ---------------- Requests ----------------
+
+class _Requests extends StatelessWidget {
+  const _Requests();
+  @override
+  Widget build(BuildContext context) {
+    final list = [...store.myReq]..sort((a, b) => str(b['created_at']).compareTo(str(a['created_at'])));
+    const kinds = {'leave': Icons.luggage_outlined, 'advance': Icons.payments_outlined, 'objection': Icons.feedback_outlined, 'other': Icons.chat_outlined};
+    return Stack(children: [
+      ListView(padding: const EdgeInsets.fromLTRB(16, 16, 16, 90), children: [
+        if (list.isEmpty) CardBox(child: EmptyState(tr('noData'))),
+        for (final r in list)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: CardBox(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Row(children: [
+                  Icon(kinds[r['kind']], color: C.primary),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(tr('kind${str(r['kind'])[0].toUpperCase()}${str(r['kind']).substring(1)}'), style: const TextStyle(fontWeight: FontWeight.w800))),
+                  Pill(r['status'] == 'pending' ? tr('waiting') : tr(str(r['status'])), tone: _st(str(r['status']))),
+                ]),
+                const SizedBox(height: 6),
+                if (r['kind'] == 'leave') Text('${wDate(str(r['date_from']))} – ${wDate(str(r['date_to']), year: true)}'),
+                if (r['kind'] == 'advance') Text('${sar(toNum(r['amount']))} · ${r['installments'] ?? 1} ${tr('installments')}'),
+                if (str(r['text']).isNotEmpty) Text(str(r['text']), style: const TextStyle(color: C.fg2)),
+                if (str(r['reply']).isNotEmpty) Padding(padding: const EdgeInsets.only(top: 6), child: Text('${tr('reply')}: ${r['reply']}', style: const TextStyle(color: C.primary700, fontWeight: FontWeight.w600))),
+                if (r['status'] == 'pending')
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: TextButton.icon(
+                      style: TextButton.styleFrom(foregroundColor: C.danger),
+                      icon: const Icon(Icons.close, size: 18),
+                      label: Text(tr('cancelReq')),
+                      onPressed: () async {
+                        final err = await store.cancelRequest(str(r['id']));
+                        if (context.mounted) toast(context, err == null ? tr('cancelled') : tr('error'), bad: err != null);
+                      },
+                    ),
+                  ),
+              ]),
+            ),
+          ),
+      ]),
+      PositionedDirectional(
+        end: 16, bottom: 16,
+        child: FloatingActionButton.extended(
+          onPressed: () => showModalBottomSheet(context: context, isScrollControlled: true, builder: (_) => const _RequestForm()),
+          icon: const Icon(Icons.add),
+          label: Text(tr('newRequest')),
+        ),
+      ),
+    ]);
+  }
+}
+
+class _RequestForm extends StatefulWidget {
+  const _RequestForm();
+  @override
+  State<_RequestForm> createState() => _RequestFormState();
+}
+
+class _RequestFormState extends State<_RequestForm> {
+  String _kind = 'leave';
+  DateTimeRange? _range;
+  String? _ref;
+  final _amount = TextEditingController(), _text = TextEditingController();
+  int _inst = 2;
+  bool _busy = false;
+
+  // Recent records a worker may object to: absences, deductions, rejected overtime (last 60 days).
+  List<(String, String)> get _refs {
+    final since = DateFormat('yyyy-MM-dd').format(DateTime.now().subtract(const Duration(days: 60)));
+    return [
+      for (final a in store.myAtt) if (a['status'] == 'absent' && str(a['date']).compareTo(since) >= 0) ('attendance:${a['id']}', '${tr('absent')} — ${wDate(str(a['date']))}'),
+      for (final d in store.myDed) if (str(d['date']).compareTo(since) >= 0) ('deductions:${d['id']}', '${tr('deductions')} ${sar(toNum(d['amount']))} — ${wDate(str(d['date']))}'),
+      for (final e in store.entries) if (e['status'] == 'rejected' && str(e['date']).compareTo(since) >= 0) ('overtime:${e['id']}', '${tr('overtime')} ${tr('rejected')} — ${wDate(str(e['date']))}'),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bad = _kind == 'leave' && _range == null ? tr('needDates') : _kind == 'advance' && toNum(_amount.text) <= 0 ? tr('needAmount') : (_kind == 'objection' || _kind == 'other') && _text.text.trim().isEmpty ? tr('needText') : null;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+      child: SingleChildScrollView(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
+          Text(tr('newRequest'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 12),
+          Wrap(spacing: 8, runSpacing: 6, children: [
+            for (final k in ['leave', 'advance', 'objection', 'other'])
+              ChoiceChip(label: Text(tr('kind${k[0].toUpperCase()}${k.substring(1)}')), selected: _kind == k, onSelected: (_) => setState(() => _kind = k)),
+          ]),
+          const SizedBox(height: 12),
+          if (_kind == 'leave')
+            OutlinedButton.icon(
+              icon: const Icon(Icons.date_range),
+              label: Text(_range == null ? '${tr('from')} — ${tr('to')}' : '${wDate(DateFormat('yyyy-MM-dd').format(_range!.start))} – ${wDate(DateFormat('yyyy-MM-dd').format(_range!.end), year: true)}'),
+              onPressed: () async {
+                final r = await showDateRangePicker(context: context, firstDate: DateTime.now().subtract(const Duration(days: 30)), lastDate: DateTime.now().add(const Duration(days: 365)));
+                if (r != null) setState(() => _range = r);
+              },
+            ),
+          if (_kind == 'advance') ...[
+            TextField(controller: _amount, keyboardType: TextInputType.number, onChanged: (_) => setState(() {}), decoration: InputDecoration(labelText: '${tr('amount')} (${tr('sar')})')),
+            const SizedBox(height: 10),
+            Row(children: [
+              Text(tr('installments')),
+              const Spacer(),
+              IconButton(onPressed: _inst > 1 ? () => setState(() => _inst--) : null, icon: const Icon(Icons.remove_circle_outline)),
+              Text('$_inst', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+              IconButton(onPressed: _inst < 12 ? () => setState(() => _inst++) : null, icon: const Icon(Icons.add_circle_outline)),
+            ]),
+          ],
+          if (_kind == 'objection' && _refs.isNotEmpty)
+            DropdownButtonFormField<String>(
+              initialValue: _ref,
+              isExpanded: true,
+              decoration: InputDecoration(labelText: tr('objectionOn')),
+              items: [for (final (v, l) in _refs) DropdownMenuItem(value: v, child: Text(l, overflow: TextOverflow.ellipsis))],
+              onChanged: (v) => setState(() => _ref = v),
+            ),
+          const SizedBox(height: 10),
+          TextField(controller: _text, maxLines: 3, onChanged: (_) => setState(() {}), decoration: InputDecoration(labelText: tr('details'))),
+          const SizedBox(height: 14),
+          if (bad != null) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(bad, style: const TextStyle(color: C.fg3))),
+          FilledButton.icon(
+            onPressed: bad != null || _busy ? null : () async {
+              setState(() => _busy = true);
+              final f = DateFormat('yyyy-MM-dd');
+              final err = await store.sendRequest({
+                'kind': _kind,
+                if (_kind == 'leave') ...{'date_from': f.format(_range!.start), 'date_to': f.format(_range!.end)},
+                if (_kind == 'advance') ...{'amount': toNum(_amount.text), 'installments': _inst},
+                if (_kind == 'objection' && _ref != null) ...{'ref_table': _ref!.split(':').first, 'ref_id': _ref!.split(':').last},
+                'text': _text.text.trim(),
+              });
+              if (!context.mounted) return;
+              setState(() => _busy = false);
+              toast(context, err == null ? tr('sent') : tr('error'), bad: err != null);
+              if (err == null) Navigator.pop(context);
+            },
+            icon: const Icon(Icons.send),
+            label: Text(tr('send')),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+// ---------------- Account ----------------
+
+class _Account extends StatelessWidget {
+  const _Account();
+  @override
+  Widget build(BuildContext context) {
+    final w = store.myWorker;
+    Widget kv(String k, String v) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            SizedBox(width: 130, child: Text(tr(k), style: const TextStyle(color: C.fg3))),
+            Expanded(child: Text(v.isEmpty ? '—' : v, style: const TextStyle(fontWeight: FontWeight.w600))),
+          ]),
+        );
+    return ListView(padding: const EdgeInsets.all(16), children: [
+      SectionTitle(tr('myData')),
+      CardBox(
+        child: Column(children: [
+          kv('name', str(w['name'])),
+          kv('workerId', str(w['id'])),
+          kv('trade', str(w['trade'])),
+          kv('project', str((store.mine['project'] as Map?)?['name'])),
+          kv('nationality', str(w['nat'])),
+          kv('iqama', str(w['iqama'])),
+          kv('iqamaExpiry', wDate(str(w['iqamaExpiry']), year: true)),
+          kv('joined', wDate(str(w['joined']), year: true)),
+          kv('phone', str(w['phone'])),
+        ]),
+      ),
+      SectionTitle(tr('language')),
+      CardBox(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(children: [
+          for (final e in workerLangs.entries)
+            ListTile(
+              dense: true,
+              title: Text(e.value, style: const TextStyle(fontWeight: FontWeight.w700)),
+              trailing: lang == e.key ? const Icon(Icons.check_circle, color: C.primary) : null,
+              onTap: () => store.setLang(e.key),
+            ),
+        ]),
+      ),
+      const SizedBox(height: 12),
+      OutlinedButton.icon(icon: const Icon(Icons.lock_reset), label: Text(tr('changePassword')), onPressed: () => _password(context)),
+      const SizedBox(height: 8),
+      OutlinedButton.icon(style: OutlinedButton.styleFrom(foregroundColor: C.danger), icon: const Icon(Icons.logout), label: Text(tr('signOut')), onPressed: () => store.signOut()),
+    ]);
+  }
+
+  Future<void> _password(BuildContext context) async {
+    final cur = TextEditingController(), next = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text(tr('changePassword')),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(controller: cur, obscureText: true, decoration: InputDecoration(labelText: tr('currentPassword'))),
+          TextField(controller: next, obscureText: true, decoration: InputDecoration(labelText: tr('newPassword'), helperText: tr('passwordRule'))),
+        ]),
+        actions: [TextButton(onPressed: () => Navigator.pop(c), child: Text(tr('cancel'))), FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(tr('save')))],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    final n = next.text;
+    if (n.length < 8 || !RegExp(r'\d').hasMatch(n) || !RegExp(r'[^\d\s]').hasMatch(n)) return toast(context, tr('passwordRule'), bad: true);
+    final err = await store.changePassword(cur.text, n);
+    if (context.mounted) toast(context, err == null ? tr('passwordChanged') : tr('error'), bad: err != null);
+  }
+}

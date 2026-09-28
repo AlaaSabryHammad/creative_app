@@ -40,8 +40,9 @@ const projectStatus = {'active': 'قيد التنفيذ', 'hold': 'متوقف', 
 const vehicleStatus = {'active': 'في الخدمة', 'maint': 'في الصيانة', 'out': 'خارج الخدمة'};
 const vehicleExpiries = [['regExpiry', 'الاستمارة'], ['insExpiry', 'التأمين'], ['inspExpiry', 'الفحص الدوري']];
 
-/// Overtime amount = hours × the worker's registered hourly rate (no multipliers).
-double otAmount(Json e, List<Map> workers) {
+/// Overtime amount = hours × the hourly rate saved on the record when it was recorded (see pay.dart otRate).
+double otAmount(Json e, [List<Map> workers = const []]) {
+  if (e['rate'] != null) return toNum(e['hours']) * toNum(e['rate']);
   for (final w in workers) {
     if (w['id'] == e['workerId']) return toNum(e['hours']) * toNum(w['rate']);
   }

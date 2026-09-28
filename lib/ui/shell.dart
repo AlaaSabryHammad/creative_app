@@ -4,6 +4,7 @@ import '../core/theme.dart';
 import '../data/store.dart';
 import 'widgets.dart';
 import 'screens/dashboard.dart';
+import 'screens/daily.dart';
 import 'screens/alerts.dart';
 import 'screens/assistant.dart';
 import 'screens/requests.dart';
@@ -28,10 +29,11 @@ final groups = <(String, List<Module>)>[
     Module('assistant', 'المساعد الذكي', Icons.auto_awesome, () => const AssistantScreen()),
     Module('alerts', 'التنبيهات', Icons.notifications_none, () => const AlertsScreen()),
   ]),
-  ('العمالة والعمل الإضافي', [
+  ('العمالة والرواتب', [
     Module('dashboard', 'لوحة الملخص', Icons.space_dashboard_outlined, () => const DashboardScreen()),
+    Module('attendance', 'كشف اليوم', Icons.event_available_outlined, () => const DailyScreen()),
     Module('requests', 'الطلبات والاعتماد', Icons.fact_check_outlined, () => const RequestsScreen()),
-    Module('workers', 'العمال', Icons.groups_outlined, () => const WorkersHub(), ['workers', 'record', 'payroll', 'payments']),
+    Module('workers', 'العمال والرواتب', Icons.groups_outlined, () => const WorkersHub(), ['workers', 'record', 'deductions', 'payroll', 'payments']),
   ]),
   ('المشاريع', [Module('projects', 'المشاريع', Icons.apartment_outlined, () => const ProjectsScreen())]),
   ('المنشأة', [
@@ -69,7 +71,9 @@ class _ShellState extends State<Shell> {
       listenable: store,
       builder: (context, _) {
         final allowed = _allowed;
-        final cur = allowed.firstWhere((m) => m.key == _cur, orElse: () => allowed.firstWhere((m) => m.key == 'dashboard', orElse: () => allowed.first));
+        // Supervisors land on the daily sheet; everyone else on the dashboard.
+        final cur = allowed.firstWhere((m) => m.key == _cur,
+            orElse: () => allowed.firstWhere((m) => m.key == (store.scoped && store.can('attendance') ? 'attendance' : 'dashboard'), orElse: () => allowed.first));
         return Scaffold(
           appBar: AppBar(
             title: Text(cur.label),
