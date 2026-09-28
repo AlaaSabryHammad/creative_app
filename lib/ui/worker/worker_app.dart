@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' show DateFormat;
+import '../email_card.dart';
 import '../../core/i18n.dart';
 import '../../core/logic.dart';
 import '../../core/pay.dart';
@@ -557,6 +558,8 @@ class _Account extends StatelessWidget {
           kv('phone', str(w['phone'])),
         ]),
       ),
+      SectionTitle(tr('email')),
+      const EmailCard(),
       SectionTitle(tr('language')),
       CardBox(
         padding: const EdgeInsets.symmetric(vertical: 6),

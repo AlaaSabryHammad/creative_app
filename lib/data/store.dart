@@ -9,13 +9,18 @@ import 'notices.dart';
 const sbUrl = 'https://sxkmcctluvomwapwomwz.supabase.co';
 const sbKey = 'sb_publishable_m6GNJRur4Apt7LfOD89U_g_FD63Ut7g';
 
-/// Logins without an email use the 10-digit ID / iqama number, stored as `<id>@workers.alhemedy.com` (same as the web).
-const _idDomain = '@workers.alhemedy.com';
-/// Temporary password of accounts created with a new worker (web: OT_DEFAULT_PW); changed at first sign-in.
+/// Users without an email sign in with their 10-digit ID / iqama number (profiles.login_id); the DB function
+/// login_email() turns it into the account's auth email (a placeholder until they add and confirm a real one).
+/// Same as the web (src/auth.js)./// Temporary password of accounts created with a new worker (web: OT_DEFAULT_PW); changed at first sign-in.
 const defaultPassword = '123456789';
 
-String loginEmail(String s) => RegExp(r'^\d{10}$').hasMatch(s.trim()) ? '${s.trim()}$_idDomain' : s.trim();
-String loginLabel(String e) => e.endsWith(_idDomain) ? e.substring(0, e.length - _idDomain.length) : e;
+/// The account's real email, or '' while it only has a placeholder.
+String realEmail(String e) => RegExp(r'^(id-)?\d{10}@(workers\.)?alhemedy\.com$', caseSensitive: false).hasMatch(e) ? '' : e;
+/// How the user signs in: ID number and/or real email.
+String loginLabel(Json u) {
+  final l = [str(u['login_id']), realEmail(str(u['email']))].where((s) => s.isNotEmpty).join(' · ');
+  return l.isEmpty ? str(u['email']) : l;
+}
 
 typedef Query = PostgrestFilterBuilder<List<Map<String, dynamic>>>;
 
@@ -58,6 +63,8 @@ class Store extends ChangeNotifier {
   bool get signedIn => me != null;
   bool get isAdmin => me?['admin'] == true;
   bool get isWorker => me?['worker_id'] != null;
+  /// An added email still waiting for its confirmation link to be opened.
+  String pendingEmail = '';
   /// Still on the temporary password it was created with: only the change-password screen is reachable (the DB blocks the rest).
   bool get mustChangePw => me?['must_change_pw'] == true;
   String get myName => str(me?['name']);
@@ -132,10 +139,18 @@ class Store extends ChangeNotifier {
 
   Future<String?> signIn(String login, String password) async {
     try {
-      final r = await sb.auth.signInWithPassword(email: loginEmail(login), password: password);
+      var email = login.trim();
+      if (RegExp(r'^\d{10}$').hasMatch(email)) {
+        final e = await sb.rpc('login_email', params: {'p_login': email, 'p_password': password});
+        if (e == null) return 'بيانات الدخول أو كلمة المرور غير صحيحة.';
+        email = '$e';
+      }
+      final r = await sb.auth.signInWithPassword(email: email, password: password);
       final err = await _enter(r.user!.id);
       if (err == null) await sb.from('profiles').update({'last_login': DateTime.now().toUtc().toIso8601String()}).eq('id', r.user!.id);
       return err;
+    } on PostgrestException catch (e) {
+      return e.message.contains('too_many_attempts') ? 'محاولات خاطئة كثيرة لهذا الرقم، انتظر 15 دقيقة ثم حاول مجددًا.' : e.message;
     } on AuthException catch (e) {
       final m = e.message.toLowerCase();
       if (m.contains('invalid login')) return 'بيانات الدخول أو كلمة المرور غير صحيحة.';
@@ -155,6 +170,7 @@ class Store extends ChangeNotifier {
         return p == null ? 'لم يُعثر على ملف المستخدم.' : 'الحساب موقوف أو بانتظار التفعيل من مدير النظام.';
       }
       me = p;
+      pendingEmail = sb.auth.currentUser?.newEmail ?? '';
       if (mustChangePw) {
         notifyListeners();
         return null;
@@ -397,6 +413,18 @@ class Store extends ChangeNotifier {
     myAtt = myDed = myAdv = myReq = mySlips = myNotes = [];
     sites = {};
     notifyListeners();
+  }
+
+  /// Adds / changes the user's email: Supabase emails a confirmation link; it is used for sign-in only once confirmed.
+  Future<String?> changeEmail(String email) async {
+    try {
+      await sb.auth.updateUser(UserAttributes(email: email.trim()), emailRedirectTo: 'https://overtime.alhemedy.com/#login');
+      pendingEmail = email.trim();
+      return null;
+    } on AuthException catch (e) {
+      final m = e.message.toLowerCase();
+      return m.contains('already') || m.contains('exists') ? tr('emailTaken') : m.contains('invalid') ? tr('emailInvalid') : e.message;
+    }
   }
 
   /// First sign-in: replace the temporary password, then load the app (the DB clears must_change_pw itself).

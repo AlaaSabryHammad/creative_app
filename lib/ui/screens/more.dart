@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../email_card.dart';
 import '../../core/logic.dart';
 import '../../core/theme.dart';
 import '../../data/store.dart';
@@ -96,10 +97,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 10),
         Text(str(me['name']), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-        Text(str(me['email']), style: const TextStyle(color: C.fg3)),
+        Text(loginLabel(me), textDirection: TextDirection.ltr, style: const TextStyle(color: C.fg3)),
         const SizedBox(height: 8),
         Pill(me['admin'] == true ? 'مدير النظام' : (str(me['title']).isEmpty ? 'مستخدم' : str(me['title'])), tone: Tone.blue),
       ])),
+      const SectionTitle('البريد الإلكتروني'),
+      const EmailCard(),
       const SectionTitle('تغيير كلمة المرور'),
       CardBox(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         TextField(controller: _cur, obscureText: true, textDirection: TextDirection.ltr, decoration: const InputDecoration(labelText: 'كلمة المرور الحالية')),
