@@ -24,7 +24,9 @@ class WorkerShell extends StatefulWidget {
 }
 
 class _WorkerShellState extends State<WorkerShell> {
-  int _tab = 0;
+  // Kept in the store: a language change rebuilds the shell from scratch (see main.dart) and must not jump home.
+  int get _tab => store.workerTab;
+  set _tab(int i) => store.workerTab = i;
   @override
   Widget build(BuildContext context) {
     final pending = store.myReq.where((r) => r['status'] == 'pending').length;
@@ -569,7 +571,10 @@ class _Account extends StatelessWidget {
               dense: true,
               title: Text(e.value, style: const TextStyle(fontWeight: FontWeight.w700)),
               trailing: lang == e.key ? const Icon(Icons.check_circle, color: C.primary) : null,
-              onTap: () => store.setLang(e.key),
+              onTap: () async {
+                final err = await store.setLang(e.key);
+                if (err != null && context.mounted) toast(context, err, bad: true);
+              },
             ),
         ]),
       ),

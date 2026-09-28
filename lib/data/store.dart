@@ -63,6 +63,9 @@ class Store extends ChangeNotifier {
   bool get signedIn => me != null;
   bool get isAdmin => me?['admin'] == true;
   bool get isWorker => me?['worker_id'] != null;
+  /// Open tab of the worker app. The shell is keyed by the language (tr() text in const widgets would otherwise
+  /// keep the old language), so the tab lives here to survive that rebuild.
+  int workerTab = 0;
   /// An added email still waiting for its confirmation link to be opened.
   String pendingEmail = '';
   /// Still on the temporary password it was created with: only the change-password screen is reachable (the DB blocks the rest).
@@ -388,10 +391,15 @@ class Store extends ChangeNotifier {
 
   /// Worker app language, kept in the auth user's metadata so it follows the worker to any phone.
   String? get lang => sb.auth.currentUser?.userMetadata?['lang'] as String?;
-  Future<void> setLang(String code) async {
-    await sb.auth.updateUser(UserAttributes(data: {'lang': code}));
+  Future<String?> setLang(String code) async {
+    try {
+      await sb.auth.updateUser(UserAttributes(data: {'lang': code}));
+    } catch (e) {
+      return tr('error');
+    }
     await Notices.setLang(code);
     notifyListeners();
+    return null;
   }
 
   // ---------- Session ----------
@@ -400,6 +408,7 @@ class Store extends ChangeNotifier {
   Future<String?> fileUrl(String id) => _urls.putIfAbsent(id, () => sb.storage.from('files').createSignedUrl(id, 3600).then<String?>((u) => u).catchError((_) => null));
 
   Future<void> signOut() async {
+    workerTab = 0;
     await _unwatch();
     if (isWorker) await Notices.unregister(sb);
     await sb.auth.signOut();

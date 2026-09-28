@@ -56,6 +56,7 @@ void main() {
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
       lang = code;
+      store.workerTab = 0;
       await tester.pumpWidget(MaterialApp(
         locale: Locale(code),
         supportedLocales: [for (final l in workerLangs.keys) Locale(l)],
@@ -125,4 +126,32 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  // Switching language while the app is open: every text follows at once and the open tab stays (main.dart keys
+  // the shell by language, like here).
+  testWidgets('language switch updates the open app', (tester) async {
+    tester.view.physicalSize = const Size(360 * 3, 740 * 3);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    Widget app(String code) => MaterialApp(
+          locale: Locale(code),
+          supportedLocales: [for (final l in workerLangs.keys) Locale(l)],
+          localizationsDelegates: const [GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
+          home: WorkerShell(key: ValueKey(code)),
+        );
+    lang = 'ar';
+    store.workerTab = 0;
+    await tester.pumpWidget(app('ar'));
+    await tester.tap(find.text(tr('account')).last);
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text(tr('myData')), findsOneWidget);
+    lang = 'en';
+    await tester.pumpWidget(app('en'));
+    await tester.pump(const Duration(milliseconds: 400));
+    lang = 'en';
+    expect(find.text(tr('myData')), findsOneWidget);  // still on the account tab, now in English
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('الرئيسية'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }
