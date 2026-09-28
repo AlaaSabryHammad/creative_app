@@ -42,10 +42,16 @@ class Pill extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(color: tone.bg, borderRadius: BorderRadius.circular(99)),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          if (icon != null) ...[Icon(icon, size: 13, color: tone.fg), const SizedBox(width: 4)],
-          Flexible(child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: tone.fg))),
-        ]),
+        // Text.rich (not Row+Flexible) so the pill ellipsizes in bounded parents and still works inside unbounded Rows.
+        child: Text.rich(
+          TextSpan(children: [
+            if (icon != null) WidgetSpan(alignment: PlaceholderAlignment.middle, child: Padding(padding: const EdgeInsetsDirectional.only(end: 4), child: Icon(icon, size: 13, color: tone.fg))),
+            TextSpan(text: text),
+          ]),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: tone.fg),
+        ),
       );
 }
 
