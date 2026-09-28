@@ -427,7 +427,7 @@ class Store extends ChangeNotifier {
   /// Adds / changes the user's email: Supabase emails a confirmation link; it is used for sign-in only once confirmed.
   Future<String?> changeEmail(String email) async {
     try {
-      await sb.auth.updateUser(UserAttributes(email: email.trim()), emailRedirectTo: 'https://overtime.alhemedy.com/#login');
+      await sb.auth.updateUser(UserAttributes(email: email.trim()), emailRedirectTo: 'https://overtime.alhemedy.com/');
       pendingEmail = email.trim();
       return null;
     } on AuthException catch (e) {
