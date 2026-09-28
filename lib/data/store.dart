@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../core/i18n.dart' show defaultLang;
+import '../core/i18n.dart' show defaultLang, tr;
 import '../core/logic.dart';
 import '../core/pay.dart';
 import 'notices.dart';
@@ -11,6 +11,9 @@ const sbKey = 'sb_publishable_m6GNJRur4Apt7LfOD89U_g_FD63Ut7g';
 
 /// Logins without an email use the 10-digit ID / iqama number, stored as `<id>@workers.alhemedy.com` (same as the web).
 const _idDomain = '@workers.alhemedy.com';
+/// Temporary password of accounts created with a new worker (web: OT_DEFAULT_PW); changed at first sign-in.
+const defaultPassword = '123456789';
+
 String loginEmail(String s) => RegExp(r'^\d{10}$').hasMatch(s.trim()) ? '${s.trim()}$_idDomain' : s.trim();
 String loginLabel(String e) => e.endsWith(_idDomain) ? e.substring(0, e.length - _idDomain.length) : e;
 
@@ -55,6 +58,8 @@ class Store extends ChangeNotifier {
   bool get signedIn => me != null;
   bool get isAdmin => me?['admin'] == true;
   bool get isWorker => me?['worker_id'] != null;
+  /// Still on the temporary password it was created with: only the change-password screen is reachable (the DB blocks the rest).
+  bool get mustChangePw => me?['must_change_pw'] == true;
   String get myName => str(me?['name']);
 
   List<Json> list(String k) => ((_data[k] as List?) ?? const []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
@@ -150,6 +155,10 @@ class Store extends ChangeNotifier {
         return p == null ? 'لم يُعثر على ملف المستخدم.' : 'الحساب موقوف أو بانتظار التفعيل من مدير النظام.';
       }
       me = p;
+      if (mustChangePw) {
+        notifyListeners();
+        return null;
+      }
       if (isWorker) {
         await _loadWorker();
         unawaited(Notices.register(sb, lang ?? defaultLang(myWorker)));
@@ -388,6 +397,17 @@ class Store extends ChangeNotifier {
     myAtt = myDed = myAdv = myReq = mySlips = myNotes = [];
     sites = {};
     notifyListeners();
+  }
+
+  /// First sign-in: replace the temporary password, then load the app (the DB clears must_change_pw itself).
+  Future<String?> setFirstPassword(String next) async {
+    if (next == defaultPassword) return tr('passwordSame');
+    try {
+      await sb.auth.updateUser(UserAttributes(password: next));
+    } on AuthException catch (e) {
+      return e.message;
+    }
+    return _enter(sb.auth.currentUser!.id);
   }
 
   Future<String?> changePassword(String current, String next) async {

@@ -25,6 +25,7 @@ String tr(String key, [Object? n]) {
 
 const _t = <String, Map<String, String>>{
   'ar': {
+    'firstLogin': 'أول دخول — غيّر كلمة المرور', 'firstLoginNote': 'حسابك يستخدم كلمة مرور مؤقتة. اختر كلمة مرور خاصة بك للمتابعة.', 'confirmPassword': 'تأكيد كلمة المرور', 'passwordMismatch': 'كلمتا المرور غير متطابقتين', 'passwordSame': 'اختر كلمة مرور مختلفة عن المؤقتة', 'saveContinue': 'حفظ والمتابعة',
     'gratuity': 'مكافأة نهاية الخدمة حتى اليوم', 'gratuityNote': 'تقديرية حسب نظام العمل عند انتهاء العقد — مدة خدمتك {n} سنة',
     'home': 'الرئيسية', 'attendance': 'الحضور', 'pay': 'الراتب', 'requests': 'طلباتي', 'account': 'حسابي',
     'hello': 'مرحبًا', 'thisMonth': 'هذا الشهر', 'estimate': 'تقدير حتى اليوم — يصبح نهائيًا بعد اعتماد المسيّر',
@@ -56,6 +57,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'تم تحديث بياناتك: {fields}', 'nVehicle': 'خُصصت لك السيارة {plate}', 'nVehicleRemoved': 'لم تعد السيارة {plate} مخصصة لك',
   },
   'en': {
+    'firstLogin': 'First sign-in — change your password', 'firstLoginNote': 'Your account uses a temporary password. Choose your own password to continue.', 'confirmPassword': 'Confirm password', 'passwordMismatch': 'Passwords do not match', 'passwordSame': 'Choose a password different from the temporary one', 'saveContinue': 'Save and continue',
     'gratuity': 'End-of-service award to date', 'gratuityNote': 'Estimate under the Labor Law at contract end — {n} years of service',
     'home': 'Home', 'attendance': 'Attendance', 'pay': 'Pay', 'requests': 'Requests', 'account': 'Account',
     'hello': 'Hello', 'thisMonth': 'This month', 'estimate': 'Estimate so far — final once payroll is approved',
@@ -87,6 +89,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'Your details were updated: {fields}', 'nVehicle': 'Vehicle assigned to you: {plate}', 'nVehicleRemoved': 'Vehicle {plate} is no longer assigned to you',
   },
   'ur': {
+    'firstLogin': 'پہلا لاگ ان — پاس ورڈ تبدیل کریں', 'firstLoginNote': 'آپ کا اکاؤنٹ عارضی پاس ورڈ استعمال کر رہا ہے۔ جاری رکھنے کے لیے اپنا پاس ورڈ منتخب کریں۔', 'confirmPassword': 'پاس ورڈ کی تصدیق کریں', 'passwordMismatch': 'پاس ورڈ مماثل نہیں ہیں', 'passwordSame': 'عارضی پاس ورڈ سے مختلف پاس ورڈ منتخب کریں', 'saveContinue': 'محفوظ کریں اور جاری رکھیں',
     'gratuity': 'آج تک سروس ختم ہونے کا انعام', 'gratuityNote': 'لیبر قانون کے مطابق معاہدہ ختم ہونے پر اندازہ — {n} سال کی سروس',
     'home': 'ہوم', 'attendance': 'حاضری', 'pay': 'تنخواہ', 'requests': 'درخواستیں', 'account': 'اکاؤنٹ',
     'hello': 'السلام علیکم', 'thisMonth': 'اس مہینے', 'estimate': 'اب تک کا اندازہ — پے رول کی منظوری کے بعد حتمی',
@@ -118,6 +121,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'آپ کی معلومات اپ ڈیٹ ہوئیں: {fields}', 'nVehicle': 'آپ کو گاڑی دی گئی: {plate}', 'nVehicleRemoved': 'گاڑی {plate} اب آپ کے پاس نہیں',
   },
   'hi': {
+    'firstLogin': 'पहला लॉगिन — पासवर्ड बदलें', 'firstLoginNote': 'आपका खाता अस्थायी पासवर्ड का उपयोग कर रहा है। जारी रखने के लिए अपना पासवर्ड चुनें।', 'confirmPassword': 'पासवर्ड की पुष्टि करें', 'passwordMismatch': 'पासवर्ड मेल नहीं खाते', 'passwordSame': 'अस्थायी पासवर्ड से अलग पासवर्ड चुनें', 'saveContinue': 'सेव करें और जारी रखें',
     'gratuity': 'आज तक सेवा समाप्ति लाभ', 'gratuityNote': 'श्रम कानून के अनुसार अनुबंध समाप्ति पर अनुमान — {n} साल की सेवा',
     'home': 'होम', 'attendance': 'हाज़िरी', 'pay': 'वेतन', 'requests': 'अनुरोध', 'account': 'खाता',
     'hello': 'नमस्ते', 'thisMonth': 'इस महीने', 'estimate': 'अब तक का अनुमान — पेरोल मंज़ूरी के बाद अंतिम',
@@ -149,6 +153,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'आपकी जानकारी अपडेट हुई: {fields}', 'nVehicle': 'आपको गाड़ी दी गई: {plate}', 'nVehicleRemoved': 'गाड़ी {plate} अब आपको नहीं दी गई है',
   },
   'bn': {
+    'firstLogin': 'প্রথম লগইন — পাসওয়ার্ড পরিবর্তন করুন', 'firstLoginNote': 'আপনার অ্যাকাউন্টে একটি অস্থায়ী পাসওয়ার্ড আছে। চালিয়ে যেতে নিজের পাসওয়ার্ড বেছে নিন।', 'confirmPassword': 'পাসওয়ার্ড নিশ্চিত করুন', 'passwordMismatch': 'পাসওয়ার্ড মিলছে না', 'passwordSame': 'অস্থায়ী পাসওয়ার্ড থেকে আলাদা পাসওয়ার্ড বেছে নিন', 'saveContinue': 'সংরক্ষণ করে এগিয়ে যান',
     'gratuity': 'আজ পর্যন্ত চাকরি শেষের সুবিধা', 'gratuityNote': 'শ্রম আইন অনুযায়ী চুক্তি শেষে আনুমানিক — {n} বছরের চাকরি',
     'home': 'হোম', 'attendance': 'হাজিরা', 'pay': 'বেতন', 'requests': 'আবেদন', 'account': 'অ্যাকাউন্ট',
     'hello': 'আসসালামু আলাইকুম', 'thisMonth': 'এই মাস', 'estimate': 'এখন পর্যন্ত আনুমানিক — পেরোল অনুমোদনের পর চূড়ান্ত',
@@ -180,6 +185,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'আপনার তথ্য হালনাগাদ হয়েছে: {fields}', 'nVehicle': 'আপনাকে গাড়ি দেওয়া হয়েছে: {plate}', 'nVehicleRemoved': 'গাড়ি {plate} আর আপনার নামে নেই',
   },
   'ne': {
+    'firstLogin': 'पहिलो लगइन — पासवर्ड परिवर्तन गर्नुहोस्', 'firstLoginNote': 'तपाईंको खाताले अस्थायी पासवर्ड प्रयोग गर्दैछ। जारी राख्न आफ्नै पासवर्ड छान्नुहोस्।', 'confirmPassword': 'पासवर्ड पुष्टि गर्नुहोस्', 'passwordMismatch': 'पासवर्ड मिलेन', 'passwordSame': 'अस्थायी पासवर्डभन्दा फरक पासवर्ड छान्नुहोस्', 'saveContinue': 'सुरक्षित गरी जारी राख्नुहोस्',
     'gratuity': 'आजसम्मको सेवा समाप्ति सुविधा', 'gratuityNote': 'श्रम कानून अनुसार सम्झौता सकिँदा अनुमान — {n} वर्षको सेवा',
     'home': 'गृह', 'attendance': 'हाजिरी', 'pay': 'तलब', 'requests': 'अनुरोध', 'account': 'खाता',
     'hello': 'नमस्ते', 'thisMonth': 'यो महिना', 'estimate': 'अहिलेसम्मको अनुमान — पेरोल स्वीकृत भएपछि अन्तिम',

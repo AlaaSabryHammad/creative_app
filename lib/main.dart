@@ -61,7 +61,7 @@ class _GateState extends State<_Gate> {
     }
     return ListenableBuilder(
       listenable: store,
-      builder: (c, _) => !store.signedIn ? LoginScreen(notice: _notice) : store.isWorker ? const WorkerShell() : const Shell(),
+      builder: (c, _) => !store.signedIn ? LoginScreen(notice: _notice) : store.mustChangePw ? const ForcePasswordScreen() : store.isWorker ? const WorkerShell() : const Shell(),
     );
   }
 }

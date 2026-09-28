@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/theme.dart';
+import '../core/i18n.dart';
 import '../data/store.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -109,6 +110,102 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
                 const Text('الدخول مخصص لموظفي المؤسسة المصرّح لهم فقط.', textAlign: TextAlign.center, style: TextStyle(color: C.slate400, fontSize: 12.5)),
+              ]),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Right after signing in with the temporary password: nothing else is reachable until it is replaced.
+/// Text follows the account's language (tr), so workers read it in theirs.
+class ForcePasswordScreen extends StatefulWidget {
+  const ForcePasswordScreen({super.key});
+  @override
+  State<ForcePasswordScreen> createState() => _ForcePasswordScreenState();
+}
+
+class _ForcePasswordScreenState extends State<ForcePasswordScreen> {
+  final _next = TextEditingController();
+  final _again = TextEditingController();
+  bool _busy = false;
+  String? _err;
+
+  Future<void> _submit() async {
+    final n = _next.text;
+    final problem = n.length < 8 || !RegExp(r'\d').hasMatch(n) || !RegExp(r'[^\d\s]').hasMatch(n)
+        ? tr('passwordRule')
+        : n != _again.text ? tr('passwordMismatch') : null;
+    if (problem != null) return setState(() => _err = problem);
+    setState(() { _busy = true; _err = null; });
+    final err = await store.setFirstPassword(n);
+    if (mounted) setState(() { _busy = false; _err = err; });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: C.cream,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Image.asset('assets/logo.png', height: 80),
+                const SizedBox(height: 22),
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: const [BoxShadow(color: Color(0x330F2240), blurRadius: 60, offset: Offset(0, 30), spreadRadius: -30)],
+                  ),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    const Icon(Icons.lock_reset, size: 40, color: C.gold),
+                    const SizedBox(height: 10),
+                    Text(tr('firstLogin'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: C.ink)),
+                    const SizedBox(height: 4),
+                    Text('${store.myName} — ${tr('firstLoginNote')}', style: const TextStyle(color: C.fg3)),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: _next,
+                      obscureText: true,
+                      textDirection: TextDirection.ltr,
+                      autofillHints: const [AutofillHints.newPassword],
+                      decoration: InputDecoration(labelText: tr('newPassword'), helperText: tr('passwordRule'), prefixIcon: const Icon(Icons.lock_outline)),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _again,
+                      obscureText: true,
+                      textDirection: TextDirection.ltr,
+                      onSubmitted: (_) => _submit(),
+                      decoration: InputDecoration(labelText: tr('confirmPassword'), prefixIcon: const Icon(Icons.lock_outline)),
+                    ),
+                    if (_err != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: C.danger50, borderRadius: BorderRadius.circular(12)),
+                        child: Row(children: [const Icon(Icons.error, color: C.danger, size: 20), const SizedBox(width: 8), Expanded(child: Text(_err!, style: const TextStyle(color: C.danger800)))]),
+                      ),
+                    ],
+                    const SizedBox(height: 18),
+                    FilledButton(
+                      style: FilledButton.styleFrom(backgroundColor: C.ink, minimumSize: const Size(0, 54)),
+                      onPressed: _busy ? null : _submit,
+                      child: _busy
+                          ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                          : Text(tr('saveContinue')),
+                    ),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(icon: const Icon(Icons.logout), label: Text(tr('signOut')), onPressed: _busy ? null : store.signOut),
+                  ]),
+                ),
               ]),
             ),
           ),
