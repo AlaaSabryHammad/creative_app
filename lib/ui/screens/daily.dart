@@ -24,6 +24,7 @@ Future<Position?> _locate() async {
 }
 
 /// Daily sheet (web: src/attendance.jsx): attendance, breakfast/lunch and overtime for one project and day.
+/// Workers are not assigned to projects: the sheet lists those whose latest record is here, and any worker can be added.
 class DailyScreen extends StatefulWidget {
   const DailyScreen({super.key});
   @override
@@ -34,6 +35,7 @@ class _DailyScreenState extends State<DailyScreen> {
   String _date = todayIso();
   String? _project;
   List<Json>? _att;
+  Map<String, Json> _sites = {};
   final Map<String, Json> _edits = {};
   final List<String> _extra = [];
   bool _locked = false, _busy = false;
@@ -47,8 +49,8 @@ class _DailyScreenState extends State<DailyScreen> {
 
   Future<void> _load() async {
     setState(() { _att = null; _edits.clear(); _extra.clear(); });
-    final r = await Future.wait([store.fetchAll('attendance', (q) => q.eq('date', _date)), store.monthLocked(_date)]);
-    if (mounted) setState(() { _att = r[0] as List<Json>; _locked = r[1] as bool; });
+    final r = await Future.wait([store.fetchAll('attendance', (q) => q.eq('date', _date)), store.monthLocked(_date), store.sitesAt(_date)]);
+    if (mounted) setState(() { _att = r[0] as List<Json>; _locked = r[1] as bool; _sites = r[2] as Map<String, Json>; });
   }
 
   Json? _saved(String id) => _att?.cast<Json?>().firstWhere((a) => a!['worker_id'] == id, orElse: () => null);
@@ -81,18 +83,24 @@ class _DailyScreenState extends State<DailyScreen> {
     final dt = dayType(_date, holidays);
     final max = toNum(dt == 'normal' ? store.settings['dailyMax'] : store.settings['restMax']);
 
-    final inProject = store.workers.where((w) => w['active'] != false && w['p'] == _project).map((w) => str(w['id']));
+    String siteOf(String id) => str(_sites[id]?['project_id']);
+    final inProject = store.allWorkers.where((w) => w['active'] != false && siteOf(str(w['id'])) == _project).map((w) => str(w['id']));
     final here = (_att ?? []).where((a) => a['project_id'] == _project).map((a) => str(a['worker_id']));
     final ids = {...inProject, ...here, ..._extra}.toList();
     final everyone = [for (final id in ids) ?store.worker(id)];
-    Json? elsewhere(String id) { final a = _saved(id); return a != null && a['project_id'] != _project ? a : null; }
+    // Recorded today at another project (the sites also see projects outside this user's scope).
+    Json? elsewhere(String id) {
+      final a = _saved(id), s = _sites[id];
+      if (a != null) return a['project_id'] != _project ? a : null;
+      return s != null && str(s['date']) == _date && siteOf(id) != _project ? s : null;
+    }
     final editable = everyone.where((w) => elsewhere(str(w['id'])) == null).toList();
     final dirty = editable.where((w) => _saved(str(w['id'])) == null || _edits.containsKey(str(w['id']))).toList();
     final rows = [for (final w in editable) (w, _row(str(w['id']), p))];
     int count(String s) => rows.where((x) => x.$2['status'] == s).length;
     final bf = rows.where((x) => x.$2['breakfast'] == true).length, ln = rows.where((x) => x.$2['lunch'] == true).length;
     final otNew = rows.where((x) => x.$2['status'] == 'present' && toNum(x.$2['ot']) > 0 && _dayOt(str(x.$1['id'])).isEmpty).toList();
-    final others = store.workers.where((w) => w['active'] != false && !ids.contains(w['id'])).toList();
+    final others = store.allWorkers.where((w) => w['active'] != false && !ids.contains(w['id']) && elsewhere(str(w['id'])) == null).toList();
 
     void all(Json Function(Json r) patch) => setState(() {
           for (final w in editable) {
@@ -196,18 +204,18 @@ class _DailyScreenState extends State<DailyScreen> {
               ),
             const SizedBox(height: 10),
             if (_att == null) const Center(child: Padding(padding: EdgeInsets.all(30), child: CircularProgressIndicator())),
-            if (_att != null && everyone.isEmpty) const CardBox(child: EmptyState('لا يوجد عمال نشطون في هذا المشروع')),
+            if (_att != null && everyone.isEmpty) const CardBox(child: EmptyState('لا يوجد عمال في هذا الموقع بعد — أضفهم من الأسفل، وسيظهرون تلقائيًا في الكشوف التالية')),
             if (_att != null)
               for (final w in everyone) _card(w, p, max, elsewhere(str(w['id']))),
             if (!_locked && others.isNotEmpty)
               TextButton.icon(
                 icon: const Icon(Icons.person_add_alt),
-                label: const Text('إضافة عامل من مشروع آخر يعمل هنا اليوم'),
+                label: const Text('إضافة عامل يعمل هنا اليوم'),
                 onPressed: () async {
                   final id = await showModalBottomSheet<String>(
                     context: context,
                     builder: (c) => ListView(children: [
-                      for (final w in others) ListTile(leading: WorkerPhoto(w['photo'], size: 34), title: Text(str(w['name'])), subtitle: Text('${w['trade']} · ${str(store.project(str(w['p']))?['name'])}'), onTap: () => Navigator.pop(c, str(w['id']))),
+                      for (final w in others) ListTile(leading: WorkerPhoto(w['photo'], size: 34), title: Text(str(w['name'])), subtitle: Text('${w['trade']} · ${siteOf(str(w['id'])).isEmpty ? 'بدون موقع سابق' : str(store.project(siteOf(str(w['id'])))?['name'])}'), onTap: () => Navigator.pop(c, str(w['id']))),
                     ]),
                   );
                   if (id != null) setState(() => _extra.add(id));

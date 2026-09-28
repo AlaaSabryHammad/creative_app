@@ -29,8 +29,9 @@ class _RecordScreenState extends State<RecordScreen> {
     final holidays = Map<String, dynamic>.from((store.settings['holidays'] as Map?) ?? {});
     final dt = dayType(_date, holidays);
     final max = toNum(dt == 'normal' ? store.settings['dailyMax'] : store.settings['restMax']);
-    final workers = store.workers.where((w) => w['active'] != false && (_all || w['p'] == _project)).toList();
-    final chosen = store.workers.where((w) => _sel.containsKey(w['id'])).toList();
+    // Workers currently at this project; «all» lists every active worker (they move between sites).
+    final workers = (_all ? store.allWorkers : store.workers.where((w) => store.site(str(w['id'])) == _project)).where((w) => w['active'] != false).toList();
+    final chosen = store.allWorkers.where((w) => _sel.containsKey(w['id'])).toList();
     final totH = _sel.values.fold<double>(0, (a, b) => a + b);
     final totA = chosen.fold<double>(0, (a, w) => a + _sel[w['id']]! * toNum(w['rate']));
     bool dup(String id) => store.entries.any((e) => e['workerId'] == id && e['date'] == _date && e['status'] != 'rejected');

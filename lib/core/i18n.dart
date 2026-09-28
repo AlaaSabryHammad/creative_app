@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart' show DateFormat;
 import 'logic.dart';
 
 /// Worker app languages (the staff app stays Arabic). A worker's language defaults from their nationality
@@ -45,6 +46,14 @@ const _t = <String, Map<String, String>>{
     'passwordRule': '8 أحرف على الأقل، حروف وأرقام', 'passwordChanged': 'تم تغيير كلمة المرور', 'signOut': 'تسجيل الخروج',
     'error': 'تعذّر تنفيذ الطلب. حاول مرة أخرى.', 'overtimeList': 'سجلات الإضافي', 'month': 'الشهر',
     'needDates': 'حدد التاريخين', 'needAmount': 'أدخل المبلغ', 'needText': 'اكتب التفاصيل', 'cancel': 'إلغاء',
+    'notifications': 'الإشعارات', 'noNotifications': 'لا توجد إشعارات', 'otRate': 'أجر ساعة الإضافي',
+    'iban': 'الآيبان', 'bank': 'البنك', 'nOtNew': 'سُجّل لك عمل إضافي {hours} س بتاريخ {date} — بانتظار الاعتماد',
+    'nOtApproved': 'اعتُمد عملك الإضافي {hours} س بتاريخ {date}', 'nOtRejected': 'رُفض العمل الإضافي {hours} س بتاريخ {date}', 'nOtChanged': 'عُدّل العمل الإضافي بتاريخ {date} إلى {hours} س',
+    'nOtDeleted': 'حُذف سجل العمل الإضافي بتاريخ {date}', 'nAtt': 'حضور {date}: {status}', 'nAttDeleted': 'حُذف سجل الحضور بتاريخ {date}',
+    'nDed': 'خصم {amount} ر.س بتاريخ {date}: {reason}', 'nDedCancelled': 'أُلغي خصم {amount} ر.س بتاريخ {date}', 'nAdv': 'سلفة {amount} ر.س — قسط {installment} ر.س شهريًا من {month}',
+    'nAdvCancelled': 'أُلغيت السلفة {amount} ر.س', 'nReqApproved': 'تمت الموافقة على طلبك: {kind}', 'nReqRejected': 'رُفض طلبك: {kind}',
+    'nSlip': 'اعتُمدت قسيمة راتب {month} — الصافي {amount} ر.س', 'nSlipPaid': 'صُرف راتب {month}: {amount} ر.س', 'nSlipWithdrawn': 'قسيمة راتب {month} قيد المراجعة',
+    'nData': 'تم تحديث بياناتك: {fields}', 'nVehicle': 'خُصصت لك السيارة {plate}', 'nVehicleRemoved': 'لم تعد السيارة {plate} مخصصة لك',
   },
   'en': {
     'gratuity': 'End-of-service award to date', 'gratuityNote': 'Estimate under the Labor Law at contract end — {n} years of service',
@@ -68,6 +77,14 @@ const _t = <String, Map<String, String>>{
     'passwordRule': 'At least 8 characters, letters and numbers', 'passwordChanged': 'Password changed', 'signOut': 'Sign out',
     'error': 'Something went wrong. Please try again.', 'overtimeList': 'Overtime records', 'month': 'Month',
     'needDates': 'Choose both dates', 'needAmount': 'Enter the amount', 'needText': 'Write the details', 'cancel': 'Cancel',
+    'notifications': 'Notifications', 'noNotifications': 'No notifications', 'otRate': 'Overtime hourly rate',
+    'iban': 'IBAN', 'bank': 'Bank', 'nOtNew': 'Overtime recorded: {hours} h on {date} — awaiting approval',
+    'nOtApproved': 'Overtime approved: {hours} h on {date}', 'nOtRejected': 'Overtime rejected: {hours} h on {date}', 'nOtChanged': 'Overtime on {date} changed to {hours} h',
+    'nOtDeleted': 'Overtime record for {date} was removed', 'nAtt': 'Attendance {date}: {status}', 'nAttDeleted': 'Attendance record for {date} was removed',
+    'nDed': 'Deduction of {amount} SAR on {date}: {reason}', 'nDedCancelled': 'Deduction of {amount} SAR on {date} was cancelled', 'nAdv': 'Salary advance {amount} SAR — {installment} SAR a month from {month}',
+    'nAdvCancelled': 'Salary advance of {amount} SAR was cancelled', 'nReqApproved': 'Your request was approved: {kind}', 'nReqRejected': 'Your request was rejected: {kind}',
+    'nSlip': 'Payslip for {month} approved — net {amount} SAR', 'nSlipPaid': 'Salary for {month} paid: {amount} SAR', 'nSlipWithdrawn': 'Payslip for {month} is being revised',
+    'nData': 'Your details were updated: {fields}', 'nVehicle': 'Vehicle assigned to you: {plate}', 'nVehicleRemoved': 'Vehicle {plate} is no longer assigned to you',
   },
   'ur': {
     'gratuity': 'آج تک سروس ختم ہونے کا انعام', 'gratuityNote': 'لیبر قانون کے مطابق معاہدہ ختم ہونے پر اندازہ — {n} سال کی سروس',
@@ -91,6 +108,14 @@ const _t = <String, Map<String, String>>{
     'passwordRule': 'کم از کم 8 حروف، حروف اور ہندسے', 'passwordChanged': 'پاس ورڈ تبدیل ہو گیا', 'signOut': 'لاگ آؤٹ',
     'error': 'کچھ غلط ہو گیا۔ دوبارہ کوشش کریں۔', 'overtimeList': 'اوور ٹائم ریکارڈ', 'month': 'مہینہ',
     'needDates': 'دونوں تاریخیں منتخب کریں', 'needAmount': 'رقم درج کریں', 'needText': 'تفصیل لکھیں', 'cancel': 'منسوخ',
+    'notifications': 'اطلاعات', 'noNotifications': 'کوئی اطلاع نہیں', 'otRate': 'اوور ٹائم فی گھنٹہ',
+    'iban': 'IBAN', 'bank': 'بینک', 'nOtNew': 'آپ کا اوور ٹائم درج ہوا: {date} کو {hours} گھنٹے — منظوری کا انتظار',
+    'nOtApproved': 'اوور ٹائم منظور: {date} کو {hours} گھنٹے', 'nOtRejected': 'اوور ٹائم مسترد: {date} کو {hours} گھنٹے', 'nOtChanged': '{date} کا اوور ٹائم {hours} گھنٹے کر دیا گیا',
+    'nOtDeleted': '{date} کا اوور ٹائم ریکارڈ ہٹا دیا گیا', 'nAtt': 'حاضری {date}: {status}', 'nAttDeleted': '{date} کا حاضری ریکارڈ ہٹا دیا گیا',
+    'nDed': '{date} کو {amount} ریال کی کٹوتی: {reason}', 'nDedCancelled': '{date} کی {amount} ریال کی کٹوتی منسوخ ہو گئی', 'nAdv': 'تنخواہ ایڈوانس {amount} ریال — {month} سے ماہانہ {installment} ریال',
+    'nAdvCancelled': '{amount} ریال کا ایڈوانس منسوخ ہو گیا', 'nReqApproved': 'آپ کی درخواست منظور ہو گئی: {kind}', 'nReqRejected': 'آپ کی درخواست مسترد ہو گئی: {kind}',
+    'nSlip': '{month} کی تنخواہ کی پرچی منظور — خالص {amount} ریال', 'nSlipPaid': '{month} کی تنخواہ ادا ہو گئی: {amount} ریال', 'nSlipWithdrawn': '{month} کی تنخواہ کی پرچی پر نظرِ ثانی ہو رہی ہے',
+    'nData': 'آپ کی معلومات اپ ڈیٹ ہوئیں: {fields}', 'nVehicle': 'آپ کو گاڑی دی گئی: {plate}', 'nVehicleRemoved': 'گاڑی {plate} اب آپ کے پاس نہیں',
   },
   'hi': {
     'gratuity': 'आज तक सेवा समाप्ति लाभ', 'gratuityNote': 'श्रम कानून के अनुसार अनुबंध समाप्ति पर अनुमान — {n} साल की सेवा',
@@ -114,6 +139,14 @@ const _t = <String, Map<String, String>>{
     'passwordRule': 'कम से कम 8 अक्षर, अक्षर और अंक', 'passwordChanged': 'पासवर्ड बदल गया', 'signOut': 'लॉग आउट',
     'error': 'कुछ गलत हो गया। फिर से कोशिश करें।', 'overtimeList': 'ओवरटाइम रिकॉर्ड', 'month': 'महीना',
     'needDates': 'दोनों तारीखें चुनें', 'needAmount': 'राशि दर्ज करें', 'needText': 'विवरण लिखें', 'cancel': 'रद्द करें',
+    'notifications': 'सूचनाएँ', 'noNotifications': 'कोई सूचना नहीं', 'otRate': 'ओवरटाइम प्रति घंटा',
+    'iban': 'IBAN', 'bank': 'बैंक', 'nOtNew': 'आपका ओवरटाइम दर्ज हुआ: {date} को {hours} घंटे — मंज़ूरी बाकी',
+    'nOtApproved': 'ओवरटाइम मंज़ूर: {date} को {hours} घंटे', 'nOtRejected': 'ओवरटाइम अस्वीकृत: {date} को {hours} घंटे', 'nOtChanged': '{date} का ओवरटाइम बदलकर {hours} घंटे किया गया',
+    'nOtDeleted': '{date} का ओवरटाइम रिकॉर्ड हटा दिया गया', 'nAtt': 'हाज़िरी {date}: {status}', 'nAttDeleted': '{date} का हाज़िरी रिकॉर्ड हटा दिया गया',
+    'nDed': '{date} को {amount} रियाल की कटौती: {reason}', 'nDedCancelled': '{date} की {amount} रियाल की कटौती रद्द हो गई', 'nAdv': 'वेतन एडवांस {amount} रियाल — {month} से हर महीने {installment} रियाल',
+    'nAdvCancelled': '{amount} रियाल का एडवांस रद्द हो गया', 'nReqApproved': 'आपका अनुरोध मंज़ूर हुआ: {kind}', 'nReqRejected': 'आपका अनुरोध अस्वीकृत हुआ: {kind}',
+    'nSlip': '{month} की वेतन पर्ची मंज़ूर — शुद्ध {amount} रियाल', 'nSlipPaid': '{month} का वेतन भुगतान हुआ: {amount} रियाल', 'nSlipWithdrawn': '{month} की वेतन पर्ची की समीक्षा हो रही है',
+    'nData': 'आपकी जानकारी अपडेट हुई: {fields}', 'nVehicle': 'आपको गाड़ी दी गई: {plate}', 'nVehicleRemoved': 'गाड़ी {plate} अब आपको नहीं दी गई है',
   },
   'bn': {
     'gratuity': 'আজ পর্যন্ত চাকরি শেষের সুবিধা', 'gratuityNote': 'শ্রম আইন অনুযায়ী চুক্তি শেষে আনুমানিক — {n} বছরের চাকরি',
@@ -137,6 +170,14 @@ const _t = <String, Map<String, String>>{
     'passwordRule': 'কমপক্ষে 8 অক্ষর, অক্ষর ও সংখ্যা', 'passwordChanged': 'পাসওয়ার্ড পরিবর্তন হয়েছে', 'signOut': 'লগ আউট',
     'error': 'কিছু ভুল হয়েছে। আবার চেষ্টা করুন।', 'overtimeList': 'ওভারটাইম রেকর্ড', 'month': 'মাস',
     'needDates': 'দুটি তারিখ বেছে নিন', 'needAmount': 'পরিমাণ লিখুন', 'needText': 'বিস্তারিত লিখুন', 'cancel': 'বাতিল',
+    'notifications': 'বিজ্ঞপ্তি', 'noNotifications': 'কোনো বিজ্ঞপ্তি নেই', 'otRate': 'ওভারটাইম প্রতি ঘণ্টা',
+    'iban': 'IBAN', 'bank': 'ব্যাংক', 'nOtNew': 'আপনার ওভারটাইম নথিভুক্ত: {date} তারিখে {hours} ঘণ্টা — অনুমোদনের অপেক্ষায়',
+    'nOtApproved': 'ওভারটাইম অনুমোদিত: {date} তারিখে {hours} ঘণ্টা', 'nOtRejected': 'ওভারটাইম প্রত্যাখ্যাত: {date} তারিখে {hours} ঘণ্টা', 'nOtChanged': '{date} তারিখের ওভারটাইম {hours} ঘণ্টা করা হয়েছে',
+    'nOtDeleted': '{date} তারিখের ওভারটাইম রেকর্ড মুছে ফেলা হয়েছে', 'nAtt': 'হাজিরা {date}: {status}', 'nAttDeleted': '{date} তারিখের হাজিরা রেকর্ড মুছে ফেলা হয়েছে',
+    'nDed': '{date} তারিখে {amount} রিয়াল কর্তন: {reason}', 'nDedCancelled': '{date} তারিখের {amount} রিয়াল কর্তন বাতিল হয়েছে', 'nAdv': 'বেতন অগ্রিম {amount} রিয়াল — {month} থেকে মাসে {installment} রিয়াল',
+    'nAdvCancelled': '{amount} রিয়ালের অগ্রিম বাতিল হয়েছে', 'nReqApproved': 'আপনার আবেদন অনুমোদিত হয়েছে: {kind}', 'nReqRejected': 'আপনার আবেদন প্রত্যাখ্যাত হয়েছে: {kind}',
+    'nSlip': '{month} মাসের বেতন স্লিপ অনুমোদিত — নিট {amount} রিয়াল', 'nSlipPaid': '{month} মাসের বেতন পরিশোধিত: {amount} রিয়াল', 'nSlipWithdrawn': '{month} মাসের বেতন স্লিপ পর্যালোচনা হচ্ছে',
+    'nData': 'আপনার তথ্য হালনাগাদ হয়েছে: {fields}', 'nVehicle': 'আপনাকে গাড়ি দেওয়া হয়েছে: {plate}', 'nVehicleRemoved': 'গাড়ি {plate} আর আপনার নামে নেই',
   },
   'ne': {
     'gratuity': 'आजसम्मको सेवा समाप्ति सुविधा', 'gratuityNote': 'श्रम कानून अनुसार सम्झौता सकिँदा अनुमान — {n} वर्षको सेवा',
@@ -160,5 +201,61 @@ const _t = <String, Map<String, String>>{
     'passwordRule': 'कम्तीमा 8 अक्षर, अक्षर र अंक', 'passwordChanged': 'पासवर्ड परिवर्तन भयो', 'signOut': 'लग आउट',
     'error': 'केही गल्ती भयो। फेरि प्रयास गर्नुहोस्।', 'overtimeList': 'ओभरटाइम रेकर्ड', 'month': 'महिना',
     'needDates': 'दुवै मिति छान्नुहोस्', 'needAmount': 'रकम लेख्नुहोस्', 'needText': 'विवरण लेख्नुहोस्', 'cancel': 'रद्द गर्नुहोस्',
+    'notifications': 'सूचनाहरू', 'noNotifications': 'कुनै सूचना छैन', 'otRate': 'ओभरटाइम प्रति घण्टा',
+    'iban': 'IBAN', 'bank': 'बैंक', 'nOtNew': 'तपाईंको ओभरटाइम दर्ता भयो: {date} मा {hours} घण्टा — स्वीकृतिको पर्खाइमा',
+    'nOtApproved': 'ओभरटाइम स्वीकृत: {date} मा {hours} घण्टा', 'nOtRejected': 'ओभरटाइम अस्वीकृत: {date} मा {hours} घण्टा', 'nOtChanged': '{date} को ओभरटाइम {hours} घण्टा बनाइयो',
+    'nOtDeleted': '{date} को ओभरटाइम रेकर्ड हटाइयो', 'nAtt': 'हाजिरी {date}: {status}', 'nAttDeleted': '{date} को हाजिरी रेकर्ड हटाइयो',
+    'nDed': '{date} मा {amount} रियाल कटौती: {reason}', 'nDedCancelled': '{date} को {amount} रियाल कटौती रद्द भयो', 'nAdv': 'तलब पेश्की {amount} रियाल — {month} देखि मासिक {installment} रियाल',
+    'nAdvCancelled': '{amount} रियालको पेश्की रद्द भयो', 'nReqApproved': 'तपाईंको अनुरोध स्वीकृत भयो: {kind}', 'nReqRejected': 'तपाईंको अनुरोध अस्वीकृत भयो: {kind}',
+    'nSlip': '{month} को तलब पर्ची स्वीकृत — खुद {amount} रियाल', 'nSlipPaid': '{month} को तलब भुक्तानी भयो: {amount} रियाल', 'nSlipWithdrawn': '{month} को तलब पर्ची पुनरावलोकन हुँदैछ',
+    'nData': 'तपाईंको विवरण अद्यावधिक भयो: {fields}', 'nVehicle': 'तपाईंलाई गाडी दिइयो: {plate}', 'nVehicleRemoved': 'गाडी {plate} अब तपाईंको नाममा छैन',
   },
 };
+
+String _fill(String key, Map<String, String> v) => v.entries.fold(tr(key), (s, e) => s.replaceAll('{${e.key}}', e.value));
+
+String _day(Object? d) {
+  final t = DateTime.tryParse(str(d));
+  return t == null ? str(d) : DateFormat('d MMM', lang).format(t);
+}
+
+String _month(Object? m) {
+  final t = DateTime.tryParse('${str(m)}-01');
+  return t == null ? str(m) : DateFormat('MMMM y', lang).format(t);
+}
+
+const _fieldKeys = {'name': 'name', 'trade': 'trade', 'salary': 'salary', 'rate': 'otRate', 'nat': 'nationality', 'iqama': 'iqama',
+  'iqamaExpiry': 'iqamaExpiry', 'phone': 'phone', 'joined': 'joined', 'iban': 'iban', 'bank': 'bank', 'leaveOpening': 'leaveBalance'};
+
+/// Title and text of a worker notification in the current language (kinds: docs/API.md › Notifications).
+(String, String) noticeText(Json n) {
+  final d = Map<String, dynamic>.from((n['data'] as Map?) ?? const {});
+  String numv(String k) => fmtNum(toNum(d[k]));
+  String extra(String k) => str(d[k]).trim().isEmpty ? '' : ' — ${str(d[k]).trim()}';
+  final ot = {'hours': numv('hours'), 'date': _day(d['date'])};
+  final kind = str(d['kind']);
+  final kindKey = kind.isEmpty ? 'kindOther' : 'kind${kind[0].toUpperCase()}${kind.substring(1)}';
+  return switch (str(n['kind'])) {
+    'ot_new' => (tr('overtime'), _fill(d['status'] == 'approved' ? 'nOtApproved' : 'nOtNew', ot)),
+    'ot_approved' => (tr('overtime'), _fill('nOtApproved', ot)),
+    'ot_rejected' => (tr('overtime'), _fill('nOtRejected', ot) + extra('note')),
+    'ot_changed' => (tr('overtime'), _fill('nOtChanged', ot)),
+    'ot_deleted' => (tr('overtime'), _fill('nOtDeleted', ot)),
+    'att' => (tr('attendance'), _fill('nAtt', {'date': _day(d['date']), 'status': tr(str(d['status']))}) +
+        [if (d['breakfast'] == true) tr('breakfast'), if (d['lunch'] == true) tr('lunch')].map((m) => ' · $m').join()),
+    'att_deleted' => (tr('attendance'), _fill('nAttDeleted', {'date': _day(d['date'])})),
+    'ded' => (tr('deductions'), _fill('nDed', {'amount': numv('amount'), 'date': _day(d['date']), 'reason': str(d['reason'])})),
+    'ded_cancelled' => (tr('deductions'), _fill('nDedCancelled', {'amount': numv('amount'), 'date': _day(d['date'])})),
+    'adv' => (tr('advances'), _fill('nAdv', {'amount': numv('amount'), 'installment': numv('installment'), 'month': _month(d['month'])})),
+    'adv_cancelled' => (tr('advances'), _fill('nAdvCancelled', {'amount': numv('amount')})),
+    'req_approved' => (tr('requests'), _fill('nReqApproved', {'kind': tr(kindKey)}) + extra('reply')),
+    'req_rejected' => (tr('requests'), _fill('nReqRejected', {'kind': tr(kindKey)}) + extra('reply')),
+    'slip' => (tr('payslips'), _fill('nSlip', {'month': _month(d['month']), 'amount': numv('net')})),
+    'slip_paid' => (tr('payslips'), _fill('nSlipPaid', {'month': _month(d['month']), 'amount': numv('net')})),
+    'slip_withdrawn' => (tr('payslips'), _fill('nSlipWithdrawn', {'month': _month(d['month'])})),
+    'data' => (tr('myData'), _fill('nData', {'fields': [for (final f in (d['fields'] as List?) ?? const []) tr(_fieldKeys[f] ?? '$f')].join(lang == 'ar' || lang == 'ur' ? '، ' : ', ')})),
+    'vehicle' => (tr('vehicle'), _fill('nVehicle', {'plate': str(d['plate'])})),
+    'vehicle_removed' => (tr('vehicle'), _fill('nVehicleRemoved', {'plate': str(d['plate'])})),
+    _ => (tr('notifications'), ''),
+  };
+}

@@ -155,9 +155,10 @@ class _DeductionFormState extends State<_DeductionForm> {
             onPressed: bad != null || _busy ? null : () async {
               setState(() => _busy = true);
               final approver = store.can('requests');
-              final projectId = store.projects.any((x) => x['id'] == w!['p']) ? w!['p'] : (store.projects.isNotEmpty ? store.projects.first['id'] : '');
+              final here = store.site(str(w!['id']));
+              final projectId = store.projects.any((x) => x['id'] == here) ? here : (store.projects.isNotEmpty ? store.projects.first['id'] : '');
               final err = await store.addDeduction({
-                'worker_id': w!['id'], 'project_id': projectId, 'date': _date, 'kind': _kind, 'hours': _kind == 'hours' ? toNum(_hours.text) : 0,
+                'worker_id': w['id'], 'project_id': projectId, 'date': _date, 'kind': _kind, 'hours': _kind == 'hours' ? toNum(_hours.text) : 0,
                 'rate': _kind == 'hours' ? wage : 0, 'amount': amount, 'reason': _reason.text.trim(), 'note': _note.text.trim(),
                 'status': approver ? 'approved' : 'pending', 'by_name': store.myName,
               });

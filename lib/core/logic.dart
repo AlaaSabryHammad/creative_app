@@ -89,7 +89,7 @@ List<AlertItem> buildAlerts({required List<Json> docs, required List<Json> vehic
 }
 
 /// Missing key data for a project (same rules as the web).
-List<String> projectIssues(Json p, int workerCount) {
+List<String> projectIssues(Json p) {
   final out = <String>[];
   void miss(String k, String t) { if (str(p[k]).trim().isEmpty) out.add(t); }
   miss('code', 'رقم المشروع / العقد غير مسجّل');
@@ -109,7 +109,6 @@ List<String> projectIssues(Json p, int workerCount) {
     out.add('لم يُرفع عقد المشروع');
   }
   if (((p['boq'] as List?) ?? []).isEmpty) out.add('لا يوجد جدول كميات للمشروع');
-  if (workerCount == 0) out.add('لا يوجد عمال مسجّلون على المشروع');
   return out;
 }
 

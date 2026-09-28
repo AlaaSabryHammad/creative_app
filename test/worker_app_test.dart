@@ -33,6 +33,17 @@ void main() {
       {'id': 'r1', 'kind': 'leave', 'date_from': '$m-20', 'date_to': '$m-25', 'text': 'سفر', 'status': 'pending', 'reply': '', 'created_at': '${t}T08:00:00Z'},
       {'id': 'r2', 'kind': 'advance', 'amount': 600, 'installments': 2, 'text': '', 'status': 'approved', 'reply': 'تمت الموافقة، يبدأ الخصم الشهر القادم', 'created_at': '${t}T07:00:00Z'},
     ];
+    store.myNotes = [
+      for (final (i, k, d) in [
+        (1, 'ot_new', {'date': t, 'hours': 2, 'status': 'pending'}), (2, 'ot_approved', {'date': t, 'hours': 2}), (3, 'ot_rejected', {'date': t, 'hours': 2, 'note': 'لا يوجد تكليف'}),
+        (4, 'ot_changed', {'date': t, 'hours': 3}), (5, 'ot_deleted', {'date': t, 'hours': 3}), (6, 'att', {'date': t, 'status': 'present', 'breakfast': true, 'lunch': true}),
+        (7, 'att_deleted', {'date': t}), (8, 'ded', {'date': t, 'amount': 50, 'reason': 'تأخير'}), (9, 'ded_cancelled', {'date': t, 'amount': 50}),
+        (10, 'adv', {'amount': 600, 'installment': 300, 'month': m}), (11, 'adv_cancelled', {'amount': 600}), (12, 'req_approved', {'kind': 'leave', 'reply': 'ok'}),
+        (13, 'req_rejected', {'kind': 'advance', 'reply': ''}), (14, 'slip', {'month': m, 'net': 2455}), (15, 'slip_paid', {'month': m, 'net': 2455}),
+        (16, 'slip_withdrawn', {'month': m}), (17, 'data', {'fields': ['salary', 'rate', 'iban']}), (18, 'vehicle', {'plate': 'أ ب ج 1234'}), (19, 'vehicle_removed', {'plate': 'أ ب ج 1234'}),
+      ])
+        {'id': i, 'kind': k, 'data': d, 'created_at': '${t}T08:${'$i'.padLeft(2, '0')}:00Z', 'read_at': i > 3 ? '${t}T09:00:00Z' : null},
+    ];
     store.mySlips = [{'id': 's1', 'month': '2026-08', 'worker_id': 'W-1002', 'net': 2455, 'paid': true, 'data': {
       'workerId': 'W-1002', 'name': 'Rajesh Kumar Subramanian', 'month': '2026-08', 'base': 2400, 'salary': 2400, 'net': 2455, 'gross': 2855, 'totalDeductions': 400,
       'days': {'present': 25, 'absent': 1, 'leave': 2, 'sick': 1, 'off': 2}, 'overtime': {'hours': 12, 'amount': 180}, 'meals': {'breakfast': 25, 'lunch': 25, 'amount': 500},
@@ -80,6 +91,37 @@ void main() {
       await tester.tap(find.text(tr('newRequest')));
       await tester.pumpAndSettle();
       expect(find.text(tr('send')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('notifications in $code', (tester) async {
+      tester.view.physicalSize = const Size(360 * 3, 740 * 3);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      lang = code;
+      // Every kind has a title and a text with all placeholders filled.
+      for (final n in store.myNotes) {
+        final (title, body) = noticeText(n);
+        expect(title.isNotEmpty && body.isNotEmpty && !body.contains('{'), isTrue, reason: '${n['kind']} → $body');
+      }
+      await tester.pumpWidget(MaterialApp(
+        locale: Locale(code),
+        supportedLocales: [for (final l in workerLangs.keys) Locale(l)],
+        localizationsDelegates: const [GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
+        home: const WorkerShell(),
+      ));
+      await tester.pump();
+      await tester.tap(find.byTooltip(tr('notifications')));
+      await tester.pumpAndSettle();
+      expect(find.text(tr('notifications')), findsWidgets);
+      final last = find.text(noticeText(store.myNotes.last).$2);
+      await tester.scrollUntilVisible(last, 300);
+      await tester.ensureVisible(last);
+      await tester.pumpAndSettle();
+      // Tapping a notice opens its tab (vehicle → home).
+      await tester.tap(last);
+      await tester.pumpAndSettle();
+      expect(find.text(tr('net')), findsWidgets);
       expect(tester.takeException(), isNull);
     });
   }

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:creative_app/core/logic.dart';
 import 'package:creative_app/core/pay.dart';
 
 // Same fixtures and expected figures as the web app's payroll checks (src/pay.js), so both apps agree.
@@ -75,6 +76,20 @@ void main() {
     expect(g('2025-03-28', '2026-09-28', 'end')!.amount, 2256.16);
     expect(g('2014-01-01', '2026-01-01', 'resign')!.amount, 28500);
     expect(gratuity({'salary': 0, 'joined': '2020-01-01'}, '2026-01-01'), null);
+  });
+
+  test('payslip project = where most of the month was worked', () {
+    Json a(String p, String d) => {'project_id': p, 'date': d};
+    expect(mainProject([a('p1', '2026-09-01'), a('p2', '2026-09-02'), a('p2', '2026-09-03')], []), 'p2');
+    expect(mainProject([a('p1', '2026-09-05'), a('p2', '2026-09-02')], []), 'p1');
+    expect(mainProject([a('', '2026-09-05'), a('p3', '2026-09-01')], []), 'p3');
+    expect(mainProject([], [{'projectId': 'p4', 'date': '2026-09-01'}]), 'p4');
+    expect(mainProject([], []), '');
+    final slip = payslip(worker: {'id': 'W-1', 'salary': 3000, 'p': 'old'}, month: '2026-09', attendance: [
+      {'worker_id': 'W-1', 'date': '2026-09-02', 'status': 'present', 'project_id': 'p2'},
+      {'worker_id': 'W-2', 'date': '2026-09-02', 'status': 'present', 'project_id': 'p9'},
+    ], overtime: [], deductions: [], advances: [], s: s);
+    expect(slip['project'], 'p2');
   });
 
   test('leave and distance', () {

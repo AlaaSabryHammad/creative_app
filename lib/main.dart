@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/i18n.dart';
 import 'core/theme.dart';
+import 'data/notices.dart';
 import 'data/store.dart';
 import 'ui/login.dart';
 import 'ui/shell.dart';
@@ -13,6 +14,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting();  // every locale: the worker app speaks several languages
   await Supabase.initialize(url: sbUrl, publishableKey: sbKey);
+  await Notices.start();  // worker notifications (see data/notices.dart)
   runApp(const CreativeApp());
 }
 

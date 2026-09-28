@@ -42,9 +42,9 @@ void main() {
   });
 
   test('project and vehicle notes shrink as data is filled', () {
-    final empty = projectIssues({'name': 'x'}, 0).length;
-    final filled = projectIssues({'name': 'x', 'code': 'P-1', 'client': 'c', 'end': '2099-01-01'}, 1).length;
-    expect(filled, empty - 4);
+    final empty = projectIssues({'name': 'x'}).length;
+    final filled = projectIssues({'name': 'x', 'code': 'P-1', 'client': 'c', 'end': '2099-01-01'}).length;
+    expect(filled, empty - 3);
     expect(vehicleIssues({'status': 'maint', 'type': 'بيك أب'}).any((t) => t.contains('نوع')), isFalse);
   });
 

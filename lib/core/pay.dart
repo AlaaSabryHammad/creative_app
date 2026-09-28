@@ -50,6 +50,20 @@ String addMonths(String ym, int n) {
 
 /// One worker's month (same shape as payslips.data). attendance/deductions/advances are table rows;
 /// overtime uses the app's entry shape; paidOtIds = overtime already paid through overtime payouts.
+/// The project a worker's month belongs to (see pay.js otMainProject): where most attendance days were
+/// (the latest wins a tie), else most overtime days — workers are not assigned to one project.
+String mainProject(List<Json> att, List<Json> overtime) {
+  final rows = att.isNotEmpty ? [for (final a in att) (str(a['project_id']), str(a['date']))] : [for (final e in overtime) (str(e['projectId']), str(e['date']))];
+  final n = <String, (int, String)>{};
+  for (final (p, d) in rows) {
+    if (p.isEmpty) continue;
+    final x = n[p] ?? (0, '');
+    n[p] = (x.$1 + 1, d.compareTo(x.$2) > 0 ? d : x.$2);
+  }
+  final best = n.entries.toList()..sort((a, b) => a.value.$1 != b.value.$1 ? b.value.$1 - a.value.$1 : b.value.$2.compareTo(a.value.$2));
+  return best.isEmpty ? '' : best.first.key;
+}
+
 Json payslip({required Json worker, required String month, required List<Json> attendance, required List<Json> overtime,
     required List<Json> deductions, required List<Json> advances, Set<String> paidOtIds = const {}, required PaySettings s}) {
   final (first, last, monthLen) = monthBounds(month);
@@ -85,7 +99,7 @@ Json payslip({required Json worker, required String month, required List<Json> a
   final gross = round2(base + otAmount + meals);
   final totalDeductions = round2(absence + dedTotal + advTotal);
   return {
-    'workerId': id, 'name': worker['name'], 'trade': worker['trade'], 'project': worker['p'] ?? '', 'iqama': worker['iqama'] ?? '',
+    'workerId': id, 'name': worker['name'], 'trade': worker['trade'], 'project': mainProject(att, otAll), 'iqama': worker['iqama'] ?? '',
     'month': month, 'salary': salary, 'base': base, 'dailyWage': round2(daily), 'employedDays': math.min(employed, monthLen),
     'days': {'recorded': att.length, 'present': count('present'), 'absent': absent, 'leave': count('leave'), 'sick': count('sick'), 'off': count('off')},
     'overtime': {'hours': ot.fold<double>(0, (a, e) => a + toNum(e['hours'])), 'amount': otAmount, 'count': ot.length, 'byDay': byDay,

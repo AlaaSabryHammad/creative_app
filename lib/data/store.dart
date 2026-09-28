@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/i18n.dart' show defaultLang;
 import '../core/logic.dart';
 import '../core/pay.dart';
+import 'notices.dart';
 
 const sbUrl = 'https://sxkmcctluvomwapwomwz.supabase.co';
 const sbKey = 'sb_publishable_m6GNJRur4Apt7LfOD89U_g_FD63Ut7g';
@@ -59,7 +61,7 @@ class Store extends ChangeNotifier {
   Json obj(String k) => Map<String, dynamic>.from((_data[k] as Map?) ?? const {});
   String text(String k) => _data[k] is String ? _data[k] as String : '';
 
-  /// Supervisors limited to some projects see only those projects and their workers.
+  /// Supervisors limited to some projects see only those projects and the workers currently at them.
   List<String> get scope => ((me?['projects'] as List?) ?? const []).map((e) => '$e').toList();
   bool get scoped => !isAdmin && scope.isNotEmpty;
   PaySettings get pay => PaySettings.from(isWorker ? Map<String, dynamic>.from((mine['settings'] as Map?) ?? {}) : settings);
@@ -78,7 +80,20 @@ class Store extends ChangeNotifier {
     }
     return _wCache!;
   }
-  List<Json> get workers => scoped ? allWorkers.where((w) => scope.contains(w['p'])).toList() : allWorkers;
+  List<Json> get workers => scoped ? allWorkers.where((w) => scope.contains(site(str(w['id'])))).toList() : allWorkers;
+
+  /// Workers are not assigned to projects: each one is where their latest attendance/overtime record is
+  /// (worker_sites in schema.sql). workerId → {project_id, date}; today's, kept fresh over Realtime.
+  Map<String, Json> sites = {};
+  String site(String workerId) => str(sites[workerId]?['project_id']);
+  Future<Map<String, Json>> sitesAt(String date) async {
+    try {
+      final rows = await sb.rpc('worker_sites', params: {'p_date': date}) as List;
+      return {for (final r in rows) str(r['worker_id']): Map<String, dynamic>.from(r as Map)};
+    } catch (_) {
+      return {};
+    }
+  }
   List<Json> get projects => scoped ? list('projects').where((p) => scope.contains(p['id'])).toList() : list('projects');
   List<Json> get trades => list('trades');
   List<Json> get docs => list('docs');
@@ -137,6 +152,7 @@ class Store extends ChangeNotifier {
       me = p;
       if (isWorker) {
         await _loadWorker();
+        unawaited(Notices.register(sb, lang ?? defaultLang(myWorker)));
       } else {
         await _loadState();
       }
@@ -183,6 +199,7 @@ class Store extends ChangeNotifier {
       _ver[r['key'] as String] = (r['version'] as num).toInt();
     }
     _ot = (await fetchAll('overtime')).map(otFromRow).toList();
+    sites = await sitesAt(todayIso());
     await _unwatch();
     _watch('app_state', (payload) {
       final r = payload.newRecord;
@@ -193,11 +210,22 @@ class Store extends ChangeNotifier {
       _ver[k] = v;
       notifyListeners();
     });
+    // New attendance or overtime can move workers between sites.
+    Timer? t;
+    void resite() {
+      t?.cancel();
+      t = Timer(const Duration(milliseconds: 800), () async {
+        sites = await sitesAt(todayIso());
+        notifyListeners();
+      });
+    }
     _watch('overtime', (payload) {
       final id = payload.newRecord['id'] ?? payload.oldRecord['id'];
       _ot = [..._ot.where((e) => e['id'] != id), if (payload.eventType != PostgresChangeEvent.delete) otFromRow(payload.newRecord)];
       notifyListeners();
+      resite();
     });
+    _watch('attendance', (_) => resite());
   }
 
   Future<void> refresh() async {
@@ -271,6 +299,9 @@ class Store extends ChangeNotifier {
 
   Json mine = {};
   List<Json> myAtt = [], myDed = [], myAdv = [], myReq = [], mySlips = [];
+  /// The worker's notifications, newest first (written by database triggers on every action — see docs/API.md).
+  List<Json> myNotes = [];
+  int get unread => myNotes.where((n) => n['read_at'] == null).length;
   Json get myWorker => Map<String, dynamic>.from((mine['worker'] as Map?) ?? {});
   String get myWorkerId => str(me?['worker_id']);
 
@@ -278,6 +309,7 @@ class Store extends ChangeNotifier {
     mine = Map<String, dynamic>.from((await sb.rpc('my_worker')) as Map? ?? {});
     final res = await Future.wait([
       fetchAll('overtime'), fetchAll('attendance'), fetchAll('deductions'), fetchAll('advances'), fetchAll('requests'), fetchAll('payslips'),
+      fetchAll('notifications'),
     ]);
     _ot = res[0].map(otFromRow).toList();
     myAtt = res[1];
@@ -285,6 +317,8 @@ class Store extends ChangeNotifier {
     myAdv = res[3];
     myReq = res[4];
     mySlips = res[5]..sort((a, b) => str(b['month']).compareTo(str(a['month'])));
+    myNotes = res[6]..sort((a, b) => str(b['created_at']).compareTo(str(a['created_at'])));
+    await Notices.seen(myNotes);
     await _unwatch();
     // Any change to the worker's rows (a decision, a new payslip, today's sheet) reloads the portal.
     Timer? t;
@@ -297,6 +331,25 @@ class Store extends ChangeNotifier {
         });
       });
     }
+    // A new notice pops up on the phone right away (and is not shown again by the background check).
+    _watch('notifications', (payload) {
+      final r = Map<String, dynamic>.from(payload.newRecord);
+      if (r.isEmpty) return;
+      myNotes = [r, ...myNotes.where((n) => n['id'] != r['id'])];
+      if (r['read_at'] == null) Notices.show(r);
+      notifyListeners();
+    });
+  }
+
+  /// Marks every notification read (the bell was opened).
+  Future<void> readNotes() async {
+    if (unread == 0) return;
+    final now = DateTime.now().toUtc().toIso8601String();
+    myNotes = [for (final n in myNotes) n['read_at'] == null ? {...n, 'read_at': now} : n];
+    notifyListeners();
+    try {
+      await sb.rpc('read_notifications');
+    } catch (_) {}
   }
 
   Future<String?> sendRequest(Json r) => _run(() async {
@@ -312,6 +365,7 @@ class Store extends ChangeNotifier {
   String? get lang => sb.auth.currentUser?.userMetadata?['lang'] as String?;
   Future<void> setLang(String code) async {
     await sb.auth.updateUser(UserAttributes(data: {'lang': code}));
+    await Notices.setLang(code);
     notifyListeners();
   }
 
@@ -322,6 +376,7 @@ class Store extends ChangeNotifier {
 
   Future<void> signOut() async {
     await _unwatch();
+    if (isWorker) await Notices.unregister(sb);
     await sb.auth.signOut();
     me = null;
     users = [];
@@ -330,7 +385,8 @@ class Store extends ChangeNotifier {
     _urls.clear();
     _ot = [];
     mine = {};
-    myAtt = myDed = myAdv = myReq = mySlips = [];
+    myAtt = myDed = myAdv = myReq = mySlips = myNotes = [];
+    sites = {};
     notifyListeners();
   }
 

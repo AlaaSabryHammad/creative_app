@@ -28,10 +28,21 @@ class _WorkerShellState extends State<WorkerShell> {
   Widget build(BuildContext context) {
     final pending = store.myReq.where((r) => r['status'] == 'pending').length;
     final tabs = [const _Home(), const _Attendance(), const _Pay(), const _Requests(), const _Account()];
+    final unread = store.unread;
     return Scaffold(
       appBar: AppBar(
         title: Text(str(store.mine['company']?['name']).isEmpty ? 'CREATIVE' : str(store.mine['company']['name']), maxLines: 1, overflow: TextOverflow.ellipsis),
-        actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: () => store.refresh())],
+        actions: [
+          IconButton(
+            tooltip: tr('notifications'),
+            icon: Badge(isLabelVisible: unread > 0, label: Text('$unread'), child: Icon(unread > 0 ? Icons.notifications_active : Icons.notifications_none)),
+            onPressed: () async {
+              final tab = await Navigator.push<int>(context, MaterialPageRoute(builder: (_) => const _Notices()));
+              if (tab != null) setState(() => _tab = tab);
+            },
+          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: () => store.refresh()),
+        ],
       ),
       body: RefreshIndicator(onRefresh: store.refresh, child: tabs[_tab]),
       bottomNavigationBar: NavigationBar(
@@ -44,6 +55,68 @@ class _WorkerShellState extends State<WorkerShell> {
           NavigationDestination(icon: Badge(isLabelVisible: pending > 0, label: Text('$pending'), child: const Icon(Icons.inbox_outlined)), label: tr('requests')),
           NavigationDestination(icon: const Icon(Icons.person_outline), selectedIcon: const Icon(Icons.person), label: tr('account')),
         ],
+      ),
+    );
+  }
+}
+
+// ---------------- Notifications ----------------
+
+/// Every action on the worker's records (attendance, overtime, deductions, pay…) — newest first. Opening the
+/// list marks them read; tapping one opens the tab it belongs to.
+class _Notices extends StatefulWidget {
+  const _Notices();
+  @override
+  State<_Notices> createState() => _NoticesState();
+}
+
+class _NoticesState extends State<_Notices> {
+  late final Set<Object?> _unread = {for (final n in store.myNotes) if (n['read_at'] == null) n['id']};
+  static const _look = {
+    'ot': (Icons.bolt, Tone.blue, 2), 'att': (Icons.event_available_outlined, Tone.green, 1), 'ded': (Icons.remove_circle_outline, Tone.red, 2),
+    'adv': (Icons.payments_outlined, Tone.orange, 2), 'req': (Icons.inbox_outlined, Tone.blue, 3), 'slip': (Icons.receipt_long_outlined, Tone.green, 2),
+    'data': (Icons.person_outline, Tone.slate, 4), 'vehicle': (Icons.directions_car_outlined, Tone.slate, 0),
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    store.readNotes();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(tr('notifications'))),
+      body: ListenableBuilder(
+        listenable: store,
+        builder: (context, _) => ListView(padding: const EdgeInsets.all(16), children: [
+          if (store.myNotes.isEmpty) CardBox(child: EmptyState(tr('noNotifications'))),
+          for (final n in store.myNotes)
+            () {
+              final (title, body) = noticeText(n);
+              final look = _look[str(n['kind']).split('_').first] ?? (Icons.notifications_none, Tone.slate, 0);
+              final t = DateTime.tryParse(str(n['created_at']))?.toLocal();
+              final fresh = _unread.contains(n['id']);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: CardBox(
+                  topStrip: fresh ? C.primary : null,
+                  onTap: () => Navigator.pop(context, look.$3),
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    CircleAvatar(backgroundColor: look.$2.bg, child: Icon(look.$1, color: look.$2.fg, size: 20)),
+                    const SizedBox(width: 12),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(title, style: TextStyle(fontWeight: fresh ? FontWeight.w800 : FontWeight.w700)),
+                      const SizedBox(height: 2),
+                      Text(body, style: const TextStyle(color: C.fg2)),
+                      if (t != null) Text(DateFormat('d MMM, HH:mm', lang).format(t), style: const TextStyle(fontSize: 12, color: C.fg3)),
+                    ])),
+                  ]),
+                ),
+              );
+            }(),
+        ]),
       ),
     );
   }

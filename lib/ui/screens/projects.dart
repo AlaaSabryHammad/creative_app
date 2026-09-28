@@ -34,8 +34,8 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
   Widget _card(BuildContext context, Json p) {
     final st = str(p['status']).isEmpty ? 'active' : str(p['status']);
-    final nW = store.workers.where((w) => w['p'] == p['id']).length;
-    final issues = projectIssues(p, nW).length;
+    final nW = store.workers.where((w) => store.site(str(w['id'])) == p['id']).length;
+    final issues = projectIssues(p).length;
     final boq = boqTotals(p['boq'] as List?);
     final hasBoq = ((p['boq'] as List?) ?? []).isNotEmpty;
     double? timePct;
@@ -115,7 +115,7 @@ class ProjectDetail extends StatelessWidget {
       builder: (context, _) {
         final p = store.project(id);
         if (p == null) return Scaffold(appBar: AppBar(), body: const EmptyState('المشروع غير موجود'));
-        final workers = store.workers.where((w) => w['p'] == id).toList();
+        final workers = store.workers.where((w) => store.site(str(w['id'])) == id).toList();  // latest record here
         final entries = store.entries.where((e) => e['projectId'] == id).toList()..sort((a, b) => str(b['date']).compareTo(str(a['date'])));
         final boq = ((p['boq'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
         final files = ((p['files'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
@@ -135,7 +135,7 @@ class ProjectDetail extends StatelessWidget {
             ),
             body: TabBarView(children: [
               ListView(padding: const EdgeInsets.all(16), children: [
-                IssuesBox(projectIssues(p, workers.length)),
+                IssuesBox(projectIssues(p)),
                 const SizedBox(height: 12),
                 CardBox(child: Column(children: [
                   KV('رقم المشروع', str(p['code'])),
@@ -167,7 +167,7 @@ class ProjectDetail extends StatelessWidget {
                 CardBox(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), child: files.isEmpty ? const EmptyState('لا توجد ملفات') : Column(children: [for (final f in files) FileTile(f)])),
               ]),
               ListView(padding: const EdgeInsets.all(16), children: [
-                if (workers.isEmpty) const CardBox(child: EmptyState('لا يوجد عمال في هذا المشروع')),
+                if (workers.isEmpty) const CardBox(child: EmptyState('لا يوجد عمال في هذا الموقع حاليًا')),
                 for (final w in workers)
                   Padding(padding: const EdgeInsets.only(bottom: 8), child: CardBox(padding: const EdgeInsets.all(10), child: Row(children: [
                     WorkerPhoto(w['photo'], size: 40), const SizedBox(width: 10),
