@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io' show Platform;
 import 'dart:math';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
@@ -10,6 +12,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:workmanager/workmanager.dart';
 import '../core/i18n.dart';
 import '../core/logic.dart';
+import '../firebase_options.dart';
 import 'store.dart' show sbUrl, sbKey;
 
 /// Background check (Android WorkManager, about every 15 minutes while the app is closed).
@@ -22,6 +25,11 @@ void noticesDispatcher() {
     return true;
   });
 }
+
+/// A push from Firebase while the app is in the background or closed (Android runs this even when closed):
+/// the message carries the notice, and the phone shows it in the worker's language.
+@pragma('vm:entry-point')
+Future<void> pushBackgroundHandler(RemoteMessage m) => Notices.showPush(m.data);
 
 /// Phone notifications for worker accounts. The database writes a notification for every action on the
 /// worker's records (docs/API.md › Notifications); the app shows each one on the phone — live over Realtime
@@ -39,9 +47,18 @@ class Notices {
 
   static bool get _supported => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
+  static bool _firebase = false;
+
   /// Called once when the app starts.
   static Future<void> start() async {
     await init();
+    if (_supported) {
+      try {
+        await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+        FirebaseMessaging.onBackgroundMessage(pushBackgroundHandler);
+        _firebase = true;
+      } catch (_) {}
+    }
     if (!_supported || !Platform.isAndroid) return;
     try {
       await Workmanager().initialize(noticesDispatcher);
@@ -100,12 +117,40 @@ class Notices {
       await init();
       await _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
       await _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()?.requestPermissions(alert: true, badge: true, sound: true);
+      await _registerPush(sb, secret);
       if (Platform.isAndroid) {
         await Workmanager().registerPeriodicTask(_task, _task,
             frequency: const Duration(minutes: 15),
             constraints: Constraints(networkType: NetworkType.connected),
             existingWorkPolicy: ExistingPeriodicWorkPolicy.keep);
       }
+    } catch (_) {}
+  }
+
+  /// Instant delivery: this phone's Firebase token goes with its device row, and follows token changes.
+  /// (iOS gets a token only once Apple push is set up for the app; until then the phone keeps the fallbacks.)
+  static Future<void> _registerPush(SupabaseClient sb, String secret) async {
+    if (!_firebase) return;
+    try {
+      Future<void> save(String? t) async {
+        if (t != null) await sb.rpc('register_push', params: {'p_secret': secret, 'p_token': t});
+      }
+      await save(await FirebaseMessaging.instance.getToken());
+      FirebaseMessaging.instance.onTokenRefresh.listen(save);
+    } catch (_) {}
+  }
+
+  /// A push's data (see supabase/functions/push in the web project) shown as a notice. The same notice id
+  /// replaces an earlier notification, so a push and the fallback checks never show it twice.
+  static Future<void> showPush(Map<String, dynamic> m) async {
+    if (m['id'] == null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.reload();
+      if (prefs.getString(_kSecret) == null) return;  // signed out on this phone
+      lang = prefs.getString(_kLang) ?? 'ar';
+      await initializeDateFormatting();
+      await show({'id': int.tryParse('${m['id']}') ?? 0, 'kind': m['kind'], 'data': jsonDecode('${m['data'] ?? '{}'}'), 'created_at': m['created_at']});
     } catch (_) {}
   }
 
@@ -123,6 +168,7 @@ class Notices {
       final prefs = await SharedPreferences.getInstance();
       final secret = prefs.getString(_kSecret);
       if (secret != null) await sb.rpc('unregister_device', params: {'p_secret': secret});
+      if (_firebase) await FirebaseMessaging.instance.deleteToken();
       await prefs.remove(_kSecret);
       await prefs.remove(_kSince);
       if (Platform.isAndroid) await Workmanager().cancelByUniqueName(_task);

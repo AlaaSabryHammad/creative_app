@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "843553410624",
+    "project_id": "creative-5ac24",
+    "storage_bucket": "creative-5ac24.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:843553410624:android:5a298f29ea09499bdf19a5",
+        "android_client_info": {
+          "package_name": "com.alhemedy.creative_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDniAQobsYZpkl0UKWPZ3kTYN3G7q6KsFQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
