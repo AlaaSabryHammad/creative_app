@@ -79,4 +79,18 @@ void main() {
     expect((store.isWorker, store.hasWorker), (false, false));
     store.me = null;
   });
+
+  // Same figures as the web check: cumulative fills in from the previous claim; progress = cumulative ÷ contract.
+  test('claim totals', () {
+    final t = claimTotals([
+      {'id': 'b', 'no': '2', 'from': '2026-09-01', 'to': '2026-09-28', 'amount': '4100000', 'status': 'submitted'},
+      {'id': 'a', 'no': '1', 'from': '2026-08-01', 'to': '2026-08-31', 'amount': '6200000', 'deductions': '620000', 'status': 'paid'},
+    ], '48500000');
+    expect(t.list.map((r) => r.c['no']), ['1', '2']);
+    expect(t.cum, 10300000);
+    expect(t.pct!.round(), 21);
+    expect((t.paid, t.due, t.remaining), (5580000, 4100000, 38200000));
+    // a percentage written on the latest claim wins
+    expect(claimTotals([{'no': '1', 'amount': '100', 'progress': '35'}], '1000').pct, 35);
+  });
 }

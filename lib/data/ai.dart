@@ -19,10 +19,12 @@ Json _snapshot(Store s) {
     'settings': {'dailyMax': s.settings['dailyMax'], 'restMax': s.settings['restMax'], 'monthlyMax': s.settings['monthlyMax'], 'holidays': s.settings['holidays'], 'alertDays': s.alertDays},
     'projects': s.projects.map((p) {
       final b = t(p['boq'] as List?);
-      return {...p, 'files': ((p['files'] as List?) ?? []).map((f) => f['name']).toList(), 'boq': {'total': b.total.round(), 'executed': b.done.round(), 'progressPct': b.pct.round(), 'items': ((p['boq'] as List?) ?? []).map((r) => [r['section'], r['code'], r['desc'], r['unit'], r['qty'], r['rate'], r['done']]).toList()}};
+      final c = claimTotals(p['claims'] as List?, p['value']);
+      return {...p, 'claims': {'count': c.list.length, 'executedToDate': c.cum.round(), 'progressPct': c.pct?.round(), 'paid': c.paid.round(), 'dueUnpaid': c.due.round(),
+          'list': [for (final r in c.list) {'no': r.c['no'], 'from': r.c['from'], 'to': r.c['to'], 'amount': r.c['amount'], 'cumulative': r.cum.round(), 'net': claimNet(r.c).round(), 'status': r.c['status']}]}, 'files': ((p['files'] as List?) ?? []).map((f) => f['name']).toList(), 'boq': {'total': b.total.round(), 'executed': b.done.round(), 'progressPct': b.pct.round(), 'items': ((p['boq'] as List?) ?? []).map((r) => [r['section'], r['code'], r['desc'], r['unit'], r['qty'], r['rate'], r['done']]).toList()}};
     }).toList(),
     'trades': s.trades,
-    'workers': s.workers.map((w) => {'id': w['id'], 'name': w['name'], 'trade': w['trade'], 'hourlyRate': w['rate'], 'currentProject': s.site(str(w['id'])), 'nationality': w['nat'], 'active': w['active'], 'iqamaExpiry': w['iqamaExpiry'] ?? ''}).toList(),
+    'workers': s.workers.map((w) => {'id': w['id'], 'name': w['name'], 'trade': w['trade'], 'hourlyRate': w['rate'], 'currentProject': s.site(str(w['id'])), 'nationality': w['nat'], 'active': w['active'], 'iqamaExpiry': w['iqamaExpiry'] ?? '', 'documents': [for (final f in (w['files'] as List?) ?? const []) {'type': f['cat'], 'expiry': f['expiry'] ?? ''}]}).toList(),
     'overtime': {
       'columns': ['id', 'date', 'workerId', 'projectId', 'hours', 'amount', 'status', 'paid', 'reason'],
       'rows': s.entries.map((e) => [e['id'], e['date'], e['workerId'], e['projectId'], e['hours'], otAmount(e, s.workers).round(), e['status'], paid.contains(e['id']), e['reason']]).toList(),

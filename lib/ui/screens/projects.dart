@@ -3,6 +3,7 @@ import '../../core/logic.dart';
 import '../../core/theme.dart';
 import '../../data/store.dart';
 import '../widgets.dart';
+import 'claims.dart';
 import 'requests.dart';
 
 Color projectStrip(String s) => s == 'hold' ? C.warning : s == 'done' ? C.slate400 : C.primary;
@@ -38,6 +39,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     final issues = projectIssues(p).length;
     final boq = boqTotals(p['boq'] as List?);
     final hasBoq = ((p['boq'] as List?) ?? []).isNotEmpty;
+    final claims = claimTotals(p['claims'] as List?, p['value']);
     double? timePct;
     if (str(p['start']).isNotEmpty && str(p['end']).isNotEmpty) {
       final span = daysLeft(str(p['end'])) - daysLeft(str(p['start']));
@@ -67,6 +69,10 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(color: C.slate50, borderRadius: BorderRadius.circular(14)),
           child: Column(children: [
+            if (claims.list.isNotEmpty) ...[
+              _bar('الإنجاز حسب المستخلصات', claims.pct, const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFD97706)])),
+              const SizedBox(height: 10),
+            ],
             _bar('إنجاز الأعمال', hasBoq ? boq.pct : null, const LinearGradient(colors: [C.success, Color(0xFF047857)])),
             const SizedBox(height: 10),
             _bar('المدة المنقضية', timePct, C.primaryGradient),
@@ -85,6 +91,8 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           _meta(Icons.folder_outlined, '${((p['files'] as List?) ?? []).length}'),
           const SizedBox(width: 12),
           _meta(Icons.list_alt, '${((p['boq'] as List?) ?? []).length}'),
+          const SizedBox(width: 12),
+          _meta(Icons.receipt_long_outlined, '${claims.list.length}'),
           const Spacer(),
           if (left != null && st == 'active') Pill(left < 0 ? 'متأخر ${-left} يوم' : 'متبقٍ $left يوم', tone: left < 0 ? Tone.red : left <= 30 ? Tone.orange : Tone.blue),
         ]),
@@ -121,13 +129,14 @@ class ProjectDetail extends StatelessWidget {
         final files = ((p['files'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
         final t = boqTotals(boq);
         return DefaultTabController(
-          length: 5,
+          length: 6,
           child: Scaffold(
             appBar: AppBar(
               title: Text(str(p['name'])),
               bottom: TabBar(isScrollable: true, tabAlignment: TabAlignment.start, labelColor: C.primary700, indicatorColor: C.primary, tabs: [
                 const Tab(text: 'البيانات'),
                 Tab(text: 'جدول الكميات (${boq.length})'),
+                Tab(text: 'المستخلصات (${((p['claims'] as List?) ?? []).length})'),
                 Tab(text: 'الملفات (${files.length})'),
                 Tab(text: 'العمال (${workers.length})'),
                 Tab(text: 'الإضافي (${entries.length})'),
@@ -163,6 +172,7 @@ class ProjectDetail extends StatelessWidget {
                   for (final r in boq) _boqRow(r),
                 ],
               ]),
+              ClaimsTab(p),
               ListView(padding: const EdgeInsets.all(16), children: [
                 CardBox(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), child: files.isEmpty ? const EmptyState('لا توجد ملفات') : Column(children: [for (final f in files) FileTile(f)])),
               ]),

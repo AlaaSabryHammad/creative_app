@@ -83,6 +83,12 @@ List<AlertItem> buildAlerts({required List<Json> docs, required List<Json> vehic
     for (final e in vehicleExpiries) { push(str(v[e[0]]), '${e[1]} — ${v['plate']}', '${str(v['make'])} ${str(v['model'])}'.trim(), 'vehicles'); }
   }
   for (final w in workers.where((w) => w['active'] != false)) { push(str(w['iqamaExpiry']), 'إقامة ${w['name']}', '${w['id']} · ${w['trade']}', 'workers'); }
+  // the worker's other dated documents (licence, passport…)
+  for (final w in workers.where((w) => w['active'] != false)) {
+    for (final f in (w['files'] as List?) ?? const []) {
+      if (str(f['expiry']).isNotEmpty && f['expiry'] != w['iqamaExpiry']) push(str(f['expiry']), '${str(f['cat']).isEmpty ? 'مستند' : f['cat']} — ${w['name']}', '${w['id']} · ${f['name']}', 'workers');
+    }
+  }
   for (final p in projects.where((p) => (p['status'] ?? 'active') == 'active')) { push(str(p['end']), 'موعد تسليم ${p['name']}', str(p['client']), 'projects'); }
   out.sort((a, b) => a.n.compareTo(b.n));
   return out;
@@ -180,3 +186,48 @@ String prevMonth() {
   final n = DateTime.now();
   return DateFormat('yyyy-MM').format(DateTime(n.year, n.month - 1, 1));
 }
+
+// ---------- Payment claims — المستخلصات (same rules as the web: src/claims.jsx) ----------
+
+const claimStatus = {'submitted': 'مقدَّم', 'approved': 'معتمد', 'paid': 'مصروف'};
+
+/// A claim's net payable: stated, else value − deductions + VAT.
+double claimNet(Json c) => toNum(c['net']) != 0 ? toNum(c['net']) : toNum(c['amount']) - toNum(c['deductions']) + toNum(c['vat']);
+
+class ClaimRow {
+  final Json c;
+  final double cum;
+  final double? pct;
+  ClaimRow(this.c, this.cum, this.pct);
+}
+
+class ClaimTotals {
+  final List<ClaimRow> list;
+  final double cum, paid, due;
+  final double? pct, remaining;
+  ClaimTotals(this.list, this.cum, this.pct, this.paid, this.due, this.remaining);
+}
+
+/// Claims in order with their running cumulative (stated, else previous + this claim); progress = the % written
+/// on the latest claim, else cumulative ÷ contract value.
+ClaimTotals claimTotals(List? claims, dynamic contract) {
+  final value = toNum(contract);
+  final sorted = [for (final c in claims ?? const []) Map<String, dynamic>.from(c as Map)]
+    ..sort((a, b) {
+      String end(Json c) => str(c['to']).isNotEmpty ? str(c['to']) : str(c['date']);
+      final n = toNum(a['no']).compareTo(toNum(b['no']));
+      return n != 0 ? n : end(a).compareTo(end(b));
+    });
+  var cum = 0.0;
+  final list = [
+    for (final c in sorted) ClaimRow(c, cum = toNum(c['cumulative']) > 0 ? toNum(c['cumulative']) : cum + toNum(c['amount']), value > 0 ? cum / value * 100 : null),
+  ];
+  final last = list.isEmpty ? null : list.last;
+  final pct = last == null ? null : toNum(last.c['progress']) > 0 ? toNum(last.c['progress']).clamp(0, 100).toDouble() : last.pct?.clamp(0, 100).toDouble();
+  final paid = list.where((r) => r.c['status'] == 'paid').fold<double>(0, (a, r) => a + claimNet(r.c));
+  final due = list.where((r) => r.c['status'] != 'paid').fold<double>(0, (a, r) => a + claimNet(r.c));
+  return ClaimTotals(list, last?.cum ?? 0, pct, paid, due, value > 0 ? (value - (last?.cum ?? 0)).clamp(0, double.infinity).toDouble() : null);
+}
+
+/// A worker's document types (worker.files[].cat); the admin can rename them in the web settings (lookups).
+const workerDocTypesDefault = ['الإقامة', 'جواز السفر', 'رخصة القيادة', 'عقد العمل', 'الشهادة الصحية', 'التأمين الطبي', 'أخرى'];

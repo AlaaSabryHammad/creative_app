@@ -3,6 +3,7 @@ import '../../core/logic.dart';
 import '../../core/theme.dart';
 import '../../data/store.dart';
 import '../widgets.dart';
+import 'worker_form.dart';
 
 class WorkersScreen extends StatefulWidget {
   const WorkersScreen({super.key});
@@ -22,6 +23,11 @@ class _WorkersScreenState extends State<WorkersScreen> {
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           sliver: SliverList.list(children: [
+            if (store.can('workers')) ...[
+              FilledButton.icon(icon: const Icon(Icons.auto_awesome), label: const Text('إضافة عامل بالذكاء الاصطناعي'),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(fullscreenDialog: true, builder: (_) => const WorkerForm()))),
+              const SizedBox(height: 12),
+            ],
             FilterChips(items: [('active', 'نشط (${all.where((w) => w['active'] != false).length})'), ('inactive', 'معطّل (${all.where((w) => w['active'] == false).length})'), ('all', 'الكل (${all.length})')], value: _st, onChanged: (v) => setState(() => _st = v)),
             const SizedBox(height: 10),
             SearchField('بحث بالاسم أو الرقم أو الهوية', onChanged: (v) => setState(() => _q = v)),
@@ -45,6 +51,10 @@ class _WorkersScreenState extends State<WorkersScreen> {
     final h = store.entries.where((e) => e['workerId'] == w['id'] && e['status'] == 'approved' && str(e['date']).startsWith(monthIso())).fold<double>(0, (a, e) => a + toNum(e['hours']));
     final exp = str(w['iqamaExpiry']);
     final n = exp.isEmpty ? null : daysLeft(exp);
+    // the soonest other document (licence, passport…) expiring within 30 days
+    final docs = [for (final f in (w['files'] as List?) ?? const []) if (str(f['expiry']).isNotEmpty && f['expiry'] != w['iqamaExpiry'] && daysLeft(str(f['expiry'])) <= 30) f]
+      ..sort((a, b) => str(a['expiry']).compareTo(str(b['expiry'])));
+    final doc = docs.isEmpty ? null : docs.first;
     return Opacity(
       opacity: active ? 1 : .7,
       child: CardBox(
@@ -62,7 +72,8 @@ class _WorkersScreenState extends State<WorkersScreen> {
               Pill(str(w['trade']), tone: Tone.blue),
               const SizedBox(height: 6),
               Text(store.site(str(w['id'])).isEmpty ? 'لم يُسجَّل في موقع بعد' : str(store.project(store.site(str(w['id'])))?['name']), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: C.fg3)),
-              if (n != null && n <= 30) Padding(padding: const EdgeInsets.only(top: 6), child: Pill(n < 0 ? 'الإقامة منتهية' : 'الإقامة بعد $n يوم', tone: n < 0 ? Tone.red : Tone.orange)),
+              if (n != null && n <= 30) Padding(padding: const EdgeInsets.only(top: 6), child: Pill(n < 0 ? 'الإقامة منتهية' : 'الإقامة بعد $n يوم', tone: n < 0 ? Tone.red : Tone.orange))
+              else if (doc != null) Padding(padding: const EdgeInsets.only(top: 6), child: Pill('${str(doc['cat']).isEmpty ? 'مستند' : doc['cat']} ${daysLeft(str(doc['expiry'])) < 0 ? 'منتهٍ' : 'بعد ${daysLeft(str(doc['expiry']))} يوم'}', tone: daysLeft(str(doc['expiry'])) < 0 ? Tone.red : Tone.orange)),
               const Spacer(),
               const Divider(height: 14, color: C.slate200),
               Row(children: [
@@ -77,7 +88,7 @@ class _WorkersScreenState extends State<WorkersScreen> {
     );
   }
 
-  void _details(BuildContext context, Json w) {
+  void _details(BuildContext context, Json w0) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -86,7 +97,10 @@ class _WorkersScreenState extends State<WorkersScreen> {
       builder: (c) => DraggableScrollableSheet(
         expand: false,
         initialChildSize: .7,
-        builder: (c, sc) => ListView(controller: sc, padding: const EdgeInsets.fromLTRB(20, 0, 20, 24), children: [
+        builder: (c, sc) => ListenableBuilder(listenable: store, builder: (c, _) {
+          final w = store.worker(str(w0['id'])) ?? w0;  // refreshed after a document is added
+          final files = [for (final f in (w['files'] as List?) ?? const []) Map<String, dynamic>.from(f as Map)];
+          return ListView(controller: sc, padding: const EdgeInsets.fromLTRB(20, 0, 20, 24), children: [
           Center(child: WorkerPhoto(w['photo'], size: 110)),
           const SizedBox(height: 10),
           Text(str(w['name']), textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
@@ -99,7 +113,15 @@ class _WorkersScreenState extends State<WorkersScreen> {
           KV('الجوال', str(w['phone'])),
           KV('أجر الساعة', '${fmtNum(toNum(w['rate']))} ر.س'),
           KV('تاريخ الالتحاق', fmtDate(str(w['joined']))),
-        ]),
+          SectionTitle('المستندات (${files.length})'),
+          if (files.isEmpty) const Text('لا توجد مستندات — صوّر الإقامة أو الرخصة أو الجواز.', style: TextStyle(color: C.fg3, fontSize: 13)),
+          for (final f in files) FileTile(f),
+          if (store.can('workers')) ...[
+            const SizedBox(height: 8),
+            OutlinedButton.icon(icon: const Icon(Icons.auto_awesome, color: C.violet), label: const Text('إضافة مستند بالذكاء الاصطناعي'), onPressed: () => addWorkerDoc(context, str(w['id']))),
+          ],
+        ]);
+        }),
       ),
     );
   }

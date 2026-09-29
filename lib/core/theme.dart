@@ -8,6 +8,7 @@ class C {
   static const primary50 = Color(0xFFEFF6FF);
   static const primary100 = Color(0xFFDBEAFE);
   static const pink = Color(0xFFFF3D7F);
+  static const violet = Color(0xFF7C3AED);  // AI-filled marks
   static const success = Color(0xFF10B981);
   static const success800 = Color(0xFF065F46);
   static const success50 = Color(0xFFECFDF5);

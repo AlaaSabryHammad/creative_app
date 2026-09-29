@@ -202,11 +202,12 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
 class DateField extends StatelessWidget {
   final String label, value;
   final ValueChanged<String> onChanged;
-  const DateField(this.label, this.value, this.onChanged, {super.key});
+  final bool future;  // allow dates years ahead (document expiry dates)
+  const DateField(this.label, this.value, this.onChanged, {super.key, this.future = false});
   @override
   Widget build(BuildContext context) => InkWell(
         onTap: () async {
-          final d = await showDatePicker(context: context, initialDate: parseDate(value) ?? DateTime.now(), firstDate: DateTime(2020), lastDate: DateTime.now().add(const Duration(days: 365)));
+          final d = await showDatePicker(context: context, initialDate: parseDate(value) ?? DateTime.now(), firstDate: DateTime(2015), lastDate: DateTime.now().add(Duration(days: future ? 365 * 15 : 365)));
           if (d != null) onChanged(DateFormat('yyyy-MM-dd').format(d));
         },
         child: InputDecorator(decoration: InputDecoration(labelText: label, prefixIcon: const Icon(Icons.event, size: 20)), child: Text(fmtDate(value))),

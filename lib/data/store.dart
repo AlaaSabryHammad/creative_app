@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/i18n.dart' show defaultLang, tr;
@@ -320,6 +321,52 @@ class Store extends ChangeNotifier {
   Future<String?> deleteRow(String table, String id) => _run(() async => sb.from(table).delete().eq('id', id));
   Future<String?> decideRequest(String id, bool approve, String reply) =>
       _run(() async => sb.rpc('decide_request', params: {'p_id': id, 'p_approve': approve, 'p_reply': reply}));
+  // ---------- Documents and record edits from the phone (projects' claims, workers and their documents) ----------
+
+  /// Uploads a file to the private bucket; returns its file entry (as the web's useOTFileDraft makes).
+  Future<Json> uploadFile(Uint8List bytes, String name, String mime) async {
+    final id = 'f-${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}${Random().nextInt(1 << 30).toRadixString(36)}';
+    await sb.storage.from('files').uploadBinary(id, bytes, fileOptions: FileOptions(contentType: mime, upsert: true));
+    return {'id': id, 'name': name, 'type': mime, 'size': bytes.length, 'date': todayIso(), 'cat': ''};
+  }
+
+  List<String> get workerDocTypes {
+    final l = ((lookups['workerDocTypes'] as List?) ?? const []).map((e) => '$e').toList();
+    return l.isEmpty ? workerDocTypesDefault : l;
+  }
+  List<String> get nationalities {
+    final l = ((lookups['nationalities'] as List?) ?? const []).map((e) => '$e').toList();
+    return l.isEmpty ? const ['سعودي', 'هندي', 'مصري', 'باكستاني', 'سوداني', 'فلبيني', 'نيبالي', 'بنغلاديشي', 'يمني'] : l;
+  }
+
+  Future<String?> saveProject(Json p) => save('projects', [for (final x in list('projects')) x['id'] == p['id'] ? p : x]);
+
+  /// Adds (no id yet → next W-number) or replaces a worker. Returns (error, id).
+  Future<(String?, String)> saveWorker(Json w) async {
+    final all = list('workers');
+    var id = str(w['id']);
+    if (id.isEmpty) {
+      final n = all.fold<int>(1000, (m, x) => max(m, int.tryParse(str(x['id']).replaceFirst('W-', '')) ?? 0));
+      id = 'W-${n + 1}';
+    }
+    final rec = {...w, 'id': id};
+    final err = await save('workers', all.any((x) => x['id'] == id) ? [for (final x in all) x['id'] == id ? rec : x] : [...all, rec]);
+    return (err, id);
+  }
+
+  /// Admins: the new worker's app login — ID = iqama number, temporary password changed at first sign-in (as the web).
+  Future<String?> createWorkerAccount(Json w) async {
+    try {
+      final uid = await sb.rpc('admin_create_user', params: {'p_email': 'id-${w['iqama']}@alhemedy.com', 'p_password': defaultPassword, 'p_name': w['name'], 'p_login': w['iqama']});
+      await sb.from('profiles').update({'name': w['name'], 'title': str(w['trade']), 'phone': str(w['phone']), 'perms': [], 'projects': [], 'active': true, 'worker_id': w['id'], 'must_change_pw': true}).eq('id', '$uid');
+      users = (await sb.from('profiles').select().order('created_at')).map((e) => Map<String, dynamic>.from(e)).toList();
+      return null;
+    } catch (e) {
+      final m = '$e';
+      return m.contains('login_taken') ? 'رقم الإقامة مسجّل لحساب آخر.' : dbError(e);
+    }
+  }
+
   Future<bool> monthLocked(String date) async {
     try {
       return await sb.rpc('month_locked', params: {'d': date}) == true;

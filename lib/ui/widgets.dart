@@ -192,7 +192,11 @@ class FileTile extends StatelessWidget {
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
       leading: Container(width: 40, height: 40, decoration: BoxDecoration(color: C.slate100, borderRadius: BorderRadius.circular(10)), child: Icon(icon, color: C.fg2)),
       title: Text(str(f['name']), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-      subtitle: Text([if (str(f['cat']).isNotEmpty) str(f['cat']), fmtDate(str(f['date']))].join(' · '), style: const TextStyle(fontSize: 12, color: C.fg3)),
+      subtitle: Text([
+        if (str(f['cat']).isNotEmpty) str(f['cat']),
+        if (str(f['number']).isNotEmpty) 'رقم ${f['number']}',
+        str(f['expiry']).isNotEmpty ? (daysLeft(str(f['expiry'])) < 0 ? 'منتهٍ منذ ${-daysLeft(str(f['expiry']))} يوم' : 'ينتهي ${fmtDate(str(f['expiry']))}') : fmtDate(str(f['date'])),
+      ].join(' · '), style: TextStyle(fontSize: 12, color: str(f['expiry']).isNotEmpty && daysLeft(str(f['expiry'])) <= 30 ? C.danger : C.fg3)),
       trailing: const Icon(Icons.open_in_new, size: 18, color: C.primary),
       onTap: () => openStoredFile(context, f),
     );
@@ -287,4 +291,20 @@ class IconText extends StatelessWidget {
         const SizedBox(width: 4),
         Flexible(child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, color: C.fg2))),
       ]);
+}
+
+/// What the AI read from a document, shown above the fields it filled.
+class AiNote extends StatelessWidget {
+  final String text;
+  const AiNote(this.text, {super.key});
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFFEEF2FF), Color(0xFFFDF2F8)]), borderRadius: BorderRadius.circular(14)),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Icon(Icons.auto_awesome, color: C.violet, size: 20),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 13, color: C.fg2, height: 1.5))),
+        ]),
+      );
 }
