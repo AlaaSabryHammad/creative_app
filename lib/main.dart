@@ -46,12 +46,22 @@ class _Gate extends StatefulWidget {
   State<_Gate> createState() => _GateState();
 }
 
-class _GateState extends State<_Gate> {
+class _GateState extends State<_Gate> with WidgetsBindingObserver {
   bool _ready = false;
   String? _notice;
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) store.resumeWorker();
+  }
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+  @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     store.restore().then((err) { if (mounted) setState(() { _ready = true; _notice = err; }); });
   }
   @override

@@ -369,6 +369,17 @@ class Store extends ChangeNotifier {
     });
   }
 
+  /// The app came back to the foreground: iOS drops the live connection while it is in the background,
+  /// so show the notices that arrived meanwhile, then reload (which also reconnects the live updates).
+  Future<void> resumeWorker() async {
+    if (!isWorker || mustChangePw) return;
+    try {
+      await Notices.poll();
+      await _loadWorker();
+      notifyListeners();
+    } catch (_) {}
+  }
+
   /// Marks every notification read (the bell was opened).
   Future<void> readNotes() async {
     if (unread == 0) return;
