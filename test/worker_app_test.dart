@@ -71,6 +71,18 @@ void main() {
         await tester.tap(find.text(tr(tab)).last);
         await tester.pump(const Duration(milliseconds: 400));
       }
+      // The period report from the attendance tab, as a month and as a date range.
+      await tester.tap(find.text(tr('attendance')).last);
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.tap(find.text(tr('myReport')));
+      await tester.pumpAndSettle();
+      expect(find.text(tr('periodNet')), findsOneWidget);
+      expect(find.text(tr('recorded', 9)), findsOneWidget);
+      await tester.tap(find.text(tr('customPeriod')));
+      await tester.pumpAndSettle();
+      expect(find.text(tr('periodNet')), findsOneWidget);
+      tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+      await tester.pumpAndSettle();
       // Pay tab sub-views and the request form.
       await tester.tap(find.text(tr('pay')).last);
       await tester.pump(const Duration(milliseconds: 400));

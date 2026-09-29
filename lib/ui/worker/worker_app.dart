@@ -6,6 +6,7 @@ import '../../core/logic.dart';
 import '../../core/pay.dart';
 import '../../core/theme.dart';
 import '../../data/store.dart';
+import '../report.dart';
 import '../screens/payroll.dart' show SlipDetails;
 import '../widgets.dart';
 
@@ -131,7 +132,7 @@ class _Home extends StatelessWidget {
   const _Home();
   @override
   Widget build(BuildContext context) {
-    final w = store.myWorker, p = store.pay, month = monthIso();
+    final w = store.myWorker, p = store.pay, month = periodMonth(todayIso(), p.startDay);
     final slip = payslip(worker: w, month: month, attendance: store.myAtt, overtime: store.myOt, deductions: store.myDed, advances: store.myAdv, paidOtIds: _paidOt, s: p);
     final days = Map<String, dynamic>.from(slip['days'] as Map), ot = slip['overtime'] as Map, meals = slip['meals'] as Map;
     final leave = leaveBalance(w, [for (final a in store.myAtt) if (a['status'] == 'leave') str(a['date'])], p, todayIso());
@@ -247,7 +248,18 @@ class _AttendanceState extends State<_Attendance> {
     final ot = {for (final e in store.myOt) if (str(e['date']).startsWith(_month) && e['status'] != 'rejected') str(e['date']): e};
     final offset = DateTime.parse(first).weekday % 7; // Sunday first
     int count(String s) => rows.values.where((a) => a['status'] == s).length;
+    bool inP(dynamic d, String f, String l) => str(d).compareTo(f) >= 0 && str(d).compareTo(l) <= 0;
     return ListView(padding: const EdgeInsets.all(16), children: [
+      FilledButton.tonalIcon(
+        icon: const Icon(Icons.summarize_outlined),
+        label: Text(tr('myReport')),
+        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => WorkerReportPage(
+          worker: store.myWorker, t: (k, ar) => tr(k),
+          load: (f, l) async => (att: [for (final a in store.myAtt) if (inP(a['date'], f, l)) a], ot: [for (final e in store.myOt) if (inP(e['date'], f, l)) e],
+              ded: [for (final d in store.myDed) if (inP(d['date'], f, l)) d], adv: [for (final a in store.myAdv) if (inP(a['date'], f, l)) a]),
+        ))),
+      ),
+      const SizedBox(height: 8),
       Row(children: [
         IconButton(onPressed: () => setState(() => _month = addMonths(_month, -1)), icon: const Icon(Icons.chevron_left)),
         Expanded(child: Text(wMonth(_month), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16))),

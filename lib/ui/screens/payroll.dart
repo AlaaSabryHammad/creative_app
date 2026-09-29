@@ -4,6 +4,7 @@ import '../../core/logic.dart';
 import '../../core/pay.dart';
 import '../../core/theme.dart';
 import '../../data/store.dart';
+import '../report.dart';
 import '../widgets.dart';
 
 /// Salary payroll for a month (web: src/payroll.jsx): the approved payslips, or a live draft.
@@ -15,7 +16,8 @@ class PayrollScreen extends StatefulWidget {
 }
 
 class _PayrollScreenState extends State<PayrollScreen> {
-  String _month = monthIso();
+  Period _per = Period(periodMonth(todayIso(), store.pay.startDay));
+  String _span = '';  // the approved run's period
   bool _loading = true;
   bool _approved = false;
   List<Json> _slips = [];
@@ -28,10 +30,11 @@ class _PayrollScreenState extends State<PayrollScreen> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final (first, last, _) = monthBounds(_month);
+    final month = _per.month;
+    final (first, last) = _per.bounds(store.pay.startDay);
     final r = await Future.wait([
-      store.fetchAll('payroll_runs', (q) => q.eq('month', _month)),
-      store.fetchAll('payslips', (q) => q.eq('month', _month)),
+      store.fetchAll('payroll_runs', (q) => q.eq('month', month)),
+      store.fetchAll('payslips', (q) => q.eq('month', month)),
       store.fetchAll('attendance', (q) => q.gte('date', first).lte('date', last)),
       store.fetchAll('deductions', (q) => q.gte('date', first).lte('date', last)),
       store.fetchAll('advances'),
@@ -43,8 +46,11 @@ class _PayrollScreenState extends State<PayrollScreen> {
         ? [for (final s in r[1]) {...Map<String, dynamic>.from(s['data'] as Map), 'paid': s['paid']}]
         : [
             for (final w in store.allWorkers.where((w) => (w['active'] != false || touched.contains(w['id'])) && (str(w['joined']).isEmpty || str(w['joined']).compareTo(last) <= 0)))
-              payslip(worker: w, month: _month, attendance: r[2], overtime: store.entries, deductions: r[3], advances: r[4], paidOtIds: paidSet(store.payments), s: store.pay),
+              payslip(worker: w, month: month, from: _per.custom?.$1, to: _per.custom?.$2, attendance: r[2], overtime: store.entries, deductions: r[3], advances: r[4], paidOtIds: paidSet(store.payments), s: store.pay),
           ];
+    if (!mounted || _per.month != month) return;
+    final run = approved ? r[0].first : null;
+    _span = run == null || run['date_from'] == null ? '' : '${fmtDate(str(run['date_from']))} — ${fmtDate(str(run['date_to']))}';
     setState(() { _approved = approved; _slips = slips..sort((a, b) => str(a['workerId']).compareTo(str(b['workerId']))); _loading = false; });
   }
 
@@ -54,12 +60,10 @@ class _PayrollScreenState extends State<PayrollScreen> {
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(padding: const EdgeInsets.all(16), children: [
-        Row(children: [
-          IconButton(onPressed: () { _month = addMonths(_month, -1); _load(); }, icon: const Icon(Icons.chevron_right)),
-          Expanded(child: Text(DateFormat('MMMM y', 'ar').format(DateTime.parse('$_month-01')), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16))),
-          IconButton(onPressed: _month.compareTo(monthIso()) >= 0 ? null : () { _month = addMonths(_month, 1); _load(); }, icon: const Icon(Icons.chevron_left)),
-        ]),
-        Center(child: Pill(_approved ? 'معتمد ومقفل' : 'مسودة — الاعتماد من الموقع', tone: _approved ? Tone.green : Tone.orange, icon: _approved ? Icons.lock_outline : Icons.edit_note)),
+        PeriodBar(value: _per, onChanged: (p) { _per = p; _load(); }),
+        if (_per.custom != null) Text('يُحفظ كمسيّر ${DateFormat('MMMM y', 'ar').format(DateTime.parse('${_per.month}-01'))}', textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: C.fg3)),
+        const SizedBox(height: 6),
+        Center(child: Pill(_approved ? 'معتمد ومقفل${_span.isEmpty ? '' : ' ($_span)'}' : 'مسودة — الاعتماد من الموقع', tone: _approved ? Tone.green : Tone.orange, icon: _approved ? Icons.lock_outline : Icons.edit_note)),
         const SizedBox(height: 12),
         if (store.scoped) const CardBox(child: EmptyState('المسيّر يعمل على مستوى المنشأة، وحسابك محدد بمشاريع معينة.')),
         if (!store.scoped) ...[

@@ -6,11 +6,13 @@ import 'logic.dart';
 /// Salaries are monthly: a day = salary / monthDays, an hour = a day / dayHours.
 class PaySettings {
   final double breakfast, lunch, monthDays, dayHours, otMultiplier, deductionCap, annual, annualAfter5, gpsRadius;
+  /// Payroll month start: 1 = the calendar month, 26 = the 26th to the 25th.
+  final int startDay;
   final bool mealsDefault;
   const PaySettings({
     this.breakfast = 5, this.lunch = 15, this.mealsDefault = true,
     this.monthDays = 30, this.dayHours = 8, this.otMultiplier = 1.5, this.deductionCap = 50,
-    this.annual = 21, this.annualAfter5 = 30, this.gpsRadius = 300,
+    this.annual = 21, this.annualAfter5 = 30, this.gpsRadius = 300, this.startDay = 1,
   });
 
   /// Stored settings with the payroll defaults filled in.
@@ -21,6 +23,7 @@ class PaySettings {
     return PaySettings(
       breakfast: n(meals, 'breakfast', 5), lunch: n(meals, 'lunch', 15), mealsDefault: s['mealsDefault'] != false,
       monthDays: n(pay, 'monthDays', 30), dayHours: n(pay, 'dayHours', 8), otMultiplier: n(pay, 'otMultiplier', 1.5), deductionCap: n(pay, 'deductionCap', 50),
+      startDay: n(pay, 'startDay', 1).round().clamp(1, 28),
       annual: n(leave, 'annual', 21), annualAfter5: n(leave, 'annualAfter5', 30), gpsRadius: n(s, 'gpsRadius', 300),
     );
   }
@@ -48,6 +51,24 @@ String addMonths(String ym, int n) {
   return ('$ym-01', '$ym-${'$days'.padLeft(2, '0')}', days);
 }
 
+/// Days from one ISO date to another, both included.
+int daysIn(String from, String to) => DateTime.utc(int.parse(to.substring(0, 4)), int.parse(to.substring(5, 7)), int.parse(to.substring(8, 10)))
+        .difference(DateTime.utc(int.parse(from.substring(0, 4)), int.parse(from.substring(5, 7)), int.parse(from.substring(8, 10))))
+        .inDays + 1;
+
+/// The payroll period of [ym] when the company month starts on [startDay] (see pay.js otPeriod):
+/// 26 = the 26th of the previous month to the 25th of [ym].
+(String, String, int) period(String ym, int startDay) {
+  if (startDay <= 1) return monthBounds(ym);
+  String pad(int n) => '$n'.padLeft(2, '0');
+  final first = '${addMonths(ym, -1)}-${pad(startDay)}', last = '$ym-${pad(startDay - 1)}';
+  return (first, last, daysIn(first, last));
+}
+
+/// The payroll month a date belongs to (on or after the start day = the next month).
+String periodMonth(String date, int startDay) =>
+    startDay > 1 && int.parse(date.substring(8, 10)) >= startDay ? addMonths(date.substring(0, 7), 1) : date.substring(0, 7);
+
 /// One worker's month (same shape as payslips.data). attendance/deductions/advances are table rows;
 /// overtime uses the app's entry shape; paidOtIds = overtime already paid through overtime payouts.
 /// The project a worker's month belongs to (see pay.js otMainProject): where most attendance days were
@@ -64,16 +85,18 @@ String mainProject(List<Json> att, List<Json> overtime) {
   return best.isEmpty ? '' : best.first.key;
 }
 
-Json payslip({required Json worker, required String month, required List<Json> attendance, required List<Json> overtime,
+/// [from]/[to] = a custom period instead of the payroll month: the salary is then paid per day in it.
+Json payslip({required Json worker, required String month, String? from, String? to, required List<Json> attendance, required List<Json> overtime,
     required List<Json> deductions, required List<Json> advances, Set<String> paidOtIds = const {}, required PaySettings s}) {
-  final (first, last, monthLen) = monthBounds(month);
+  final custom = from != null && to != null;
+  final (first, last, monthLen) = custom ? (from, to, daysIn(from, to)) : period(month, s.startDay);
   bool inMonth(dynamic d) => str(d).compareTo(first) >= 0 && str(d).compareTo(last) <= 0;
   final id = str(worker['id']);
   final salary = toNum(worker['salary']);
   final daily = salary / s.monthDays;
   final joined = str(worker['joined']);
-  final employed = joined.compareTo(first) > 0 ? math.max(0, monthLen - int.parse(joined.substring(8, 10)) + 1) : monthLen;
-  final base = employed < monthLen ? round2(daily * math.min(employed, s.monthDays)) : salary;
+  final employed = joined.compareTo(first) > 0 ? (joined.compareTo(last) > 0 ? 0 : daysIn(joined, last)) : monthLen;
+  final base = employed < monthLen || custom ? round2(daily * math.min(employed, s.monthDays)) : salary;
 
   final att = attendance.where((a) => a['worker_id'] == id && inMonth(a['date'])).toList();
   int count(String st) => att.where((a) => a['status'] == st).length;
@@ -100,7 +123,7 @@ Json payslip({required Json worker, required String month, required List<Json> a
   final totalDeductions = round2(absence + dedTotal + advTotal);
   return {
     'workerId': id, 'name': worker['name'], 'trade': worker['trade'], 'project': mainProject(att, otAll), 'iqama': worker['iqama'] ?? '',
-    'month': month, 'salary': salary, 'base': base, 'dailyWage': round2(daily), 'employedDays': math.min(employed, monthLen),
+    'month': month, 'from': first, 'to': last, 'salary': salary, 'base': base, 'dailyWage': round2(daily), 'employedDays': math.min(employed, monthLen),
     'days': {'recorded': att.length, 'present': count('present'), 'absent': absent, 'leave': count('leave'), 'sick': count('sick'), 'off': count('off')},
     'overtime': {'hours': ot.fold<double>(0, (a, e) => a + toNum(e['hours'])), 'amount': otAmount, 'count': ot.length, 'byDay': byDay,
       'paidSeparately': round2(otAll.where((e) => paidOtIds.contains(e['id'])).fold<double>(0, (a, e) => a + toNum(e['hours']) * toNum(e['rate'])))},

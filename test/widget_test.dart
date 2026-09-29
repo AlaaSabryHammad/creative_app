@@ -2,6 +2,7 @@ import 'package:creative_app/data/store.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:creative_app/core/logic.dart';
+import 'package:creative_app/core/pay.dart';
 
 String iso(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
 
@@ -92,5 +93,20 @@ void main() {
     expect((t.paid, t.due, t.remaining), (5580000, 4100000, 38200000));
     // a percentage written on the latest claim wins
     expect(claimTotals([{'no': '1', 'amount': '100', 'progress': '35'}], '1000').pct, 35);
+  });
+
+  test('payroll period: company month from the 26th, custom range, mid-period joiner', () {
+    expect(period('2026-10', 26), ('2026-09-26', '2026-10-25', 30));
+    expect(period('2026-01', 26), ('2025-12-26', '2026-01-25', 31));
+    expect(period('2026-02', 1), ('2026-02-01', '2026-02-28', 28));
+    expect((periodMonth('2026-09-30', 26), periodMonth('2026-09-25', 26), periodMonth('2026-12-26', 26)), ('2026-10', '2026-09', '2027-01'));
+    const s = PaySettings(startDay: 26);
+    Json slip(Json w, {String? from, String? to}) => payslip(worker: w, month: '2026-10', from: from, to: to, attendance: [
+          {'worker_id': 'W1', 'date': '2026-09-27', 'status': 'absent'}, {'worker_id': 'W1', 'date': '2026-10-27', 'status': 'absent'},
+        ], overtime: const [], deductions: const [], advances: const [], s: s);
+    final m = slip({'id': 'W1', 'salary': 3000});
+    expect((m['base'], (m['days'] as Map)['absent'], m['from']), (3000, 1, '2026-09-26'));
+    expect(slip({'id': 'W1', 'salary': 3000}, from: '2026-10-01', to: '2026-10-15')['base'], 1500);
+    expect(slip({'id': 'W1', 'salary': 3000, 'joined': '2026-10-16'})['base'], 1000);
   });
 }

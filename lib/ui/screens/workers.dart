@@ -3,6 +3,7 @@ import '../../core/logic.dart';
 import '../../core/theme.dart';
 import '../../data/store.dart';
 import '../widgets.dart';
+import '../report.dart';
 import 'worker_form.dart';
 
 class WorkersScreen extends StatefulWidget {
@@ -113,6 +114,15 @@ class _WorkersScreenState extends State<WorkersScreen> {
           KV('الجوال', str(w['phone'])),
           KV('أجر الساعة', '${fmtNum(toNum(w['rate']))} ر.س'),
           KV('تاريخ الالتحاق', fmtDate(str(w['joined']))),
+          const SizedBox(height: 10),
+          FilledButton.tonalIcon(icon: const Icon(Icons.summarize_outlined), label: const Text('تقرير العامل: الحضور والإضافي والخصومات'), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => WorkerReportPage(
+            worker: w, money: store.can('payroll'),
+            load: (f, l) async {
+              Query q(Query x) => x.eq('worker_id', str(w['id'])).gte('date', f).lte('date', l);
+              final r = await Future.wait([store.fetchAll('attendance', q), store.fetchAll('deductions', q), store.fetchAll('advances', q)]);
+              return (att: r[0], ot: [for (final e in store.entries) if (e['workerId'] == w['id'] && str(e['date']).compareTo(f) >= 0 && str(e['date']).compareTo(l) <= 0) e], ded: r[1], adv: r[2]);
+            },
+          )))),
           SectionTitle('المستندات (${files.length})'),
           if (files.isEmpty) const Text('لا توجد مستندات — صوّر الإقامة أو الرخصة أو الجواز.', style: TextStyle(color: C.fg3, fontSize: 13)),
           for (final f in files) FileTile(f),
