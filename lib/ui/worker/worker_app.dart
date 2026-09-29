@@ -15,7 +15,7 @@ String wDate(String d, {bool year = false}) => d.isEmpty ? '—' : DateFormat(ye
 String wMonth(String ym) => DateFormat('MMMM y', lang).format(DateTime.parse('$ym-01'));
 const _att = {'present': Tone.green, 'absent': Tone.red, 'leave': Tone.blue, 'sick': Tone.orange, 'off': Tone.slate};
 Tone _st(String s) => s == 'approved' ? Tone.green : s == 'rejected' ? Tone.red : Tone.orange;
-Set<String> get _paidOt => {...((store.mine['paidOt'] as List?) ?? const []).map((e) => '$e'), for (final e in store.entries) if (str(e['paidBy']).isNotEmpty) str(e['id'])};
+Set<String> get _paidOt => {...((store.mine['paidOt'] as List?) ?? const []).map((e) => '$e'), for (final e in store.myOt) if (str(e['paidBy']).isNotEmpty) str(e['id'])};
 
 class WorkerShell extends StatefulWidget {
   const WorkerShell({super.key});
@@ -132,7 +132,7 @@ class _Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final w = store.myWorker, p = store.pay, month = monthIso();
-    final slip = payslip(worker: w, month: month, attendance: store.myAtt, overtime: store.entries, deductions: store.myDed, advances: store.myAdv, paidOtIds: _paidOt, s: p);
+    final slip = payslip(worker: w, month: month, attendance: store.myAtt, overtime: store.myOt, deductions: store.myDed, advances: store.myAdv, paidOtIds: _paidOt, s: p);
     final days = Map<String, dynamic>.from(slip['days'] as Map), ot = slip['overtime'] as Map, meals = slip['meals'] as Map;
     final leave = leaveBalance(w, [for (final a in store.myAtt) if (a['status'] == 'leave') str(a['date'])], p, todayIso());
     final iq = str(w['iqamaExpiry']).isEmpty ? null : daysLeft(str(w['iqamaExpiry']));
@@ -244,7 +244,7 @@ class _AttendanceState extends State<_Attendance> {
   Widget build(BuildContext context) {
     final (first, last, n) = monthBounds(_month);
     final rows = {for (final a in store.myAtt) if (str(a['date']).compareTo(first) >= 0 && str(a['date']).compareTo(last) <= 0) str(a['date']): a};
-    final ot = {for (final e in store.entries) if (str(e['date']).startsWith(_month) && e['status'] != 'rejected') str(e['date']): e};
+    final ot = {for (final e in store.myOt) if (str(e['date']).startsWith(_month) && e['status'] != 'rejected') str(e['date']): e};
     final offset = DateTime.parse(first).weekday % 7; // Sunday first
     int count(String s) => rows.values.where((a) => a['status'] == s).length;
     return ListView(padding: const EdgeInsets.all(16), children: [
@@ -313,7 +313,7 @@ class _PayState extends State<_Pay> {
   @override
   Widget build(BuildContext context) {
     final paid = _paidOt;
-    final ot = [...store.entries]..sort((a, b) => str(b['date']).compareTo(str(a['date'])));
+    final ot = [...store.myOt]..sort((a, b) => str(b['date']).compareTo(str(a['date'])));
     final ded = [...store.myDed]..sort((a, b) => str(b['date']).compareTo(str(a['date'])));
     return ListView(padding: const EdgeInsets.all(16), children: [
       FilterChips(items: [('slips', tr('payslips')), ('ot', tr('overtime')), ('ded', tr('deductions')), ('adv', tr('advances'))], value: _v, onChanged: (v) => setState(() => _v = v)),
@@ -456,7 +456,7 @@ class _RequestFormState extends State<_RequestForm> {
     return [
       for (final a in store.myAtt) if (a['status'] == 'absent' && str(a['date']).compareTo(since) >= 0) ('attendance:${a['id']}', '${tr('absent')} — ${wDate(str(a['date']))}'),
       for (final d in store.myDed) if (str(d['date']).compareTo(since) >= 0) ('deductions:${d['id']}', '${tr('deductions')} ${sar(toNum(d['amount']))} — ${wDate(str(d['date']))}'),
-      for (final e in store.entries) if (e['status'] == 'rejected' && str(e['date']).compareTo(since) >= 0) ('overtime:${e['id']}', '${tr('overtime')} ${tr('rejected')} — ${wDate(str(e['date']))}'),
+      for (final e in store.myOt) if (e['status'] == 'rejected' && str(e['date']).compareTo(since) >= 0) ('overtime:${e['id']}', '${tr('overtime')} ${tr('rejected')} — ${wDate(str(e['date']))}'),
     ];
   }
 
@@ -560,6 +560,8 @@ class _Account extends StatelessWidget {
           kv('phone', str(w['phone'])),
         ]),
       ),
+      // A supervisor opens this portal from their staff profile, which already has these account settings.
+      if (store.isWorker) ...[
       SectionTitle(tr('email')),
       const EmailCard(),
       SectionTitle(tr('language')),
@@ -582,6 +584,7 @@ class _Account extends StatelessWidget {
       OutlinedButton.icon(icon: const Icon(Icons.lock_reset), label: Text(tr('changePassword')), onPressed: () => _password(context)),
       const SizedBox(height: 8),
       OutlinedButton.icon(style: OutlinedButton.styleFrom(foregroundColor: C.danger), icon: const Icon(Icons.logout), label: Text(tr('signOut')), onPressed: () => store.signOut()),
+      ],
     ]);
   }
 

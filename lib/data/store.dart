@@ -56,13 +56,16 @@ class Store extends ChangeNotifier {
   List<Json> users = [];
   final Map<String, dynamic> _data = {};
   final Map<String, int> _ver = {};
-  final List<RealtimeChannel> _channels = [];
+  final List<RealtimeChannel> _channels = [], _myChannels = [];
   final Map<String, Future<String?>> _urls = {};
   List<Json> _ot = [];
 
   bool get signedIn => me != null;
   bool get isAdmin => me?['admin'] == true;
-  bool get isWorker => me?['worker_id'] != null;
+  /// A worker-app-only account. A staff account may also be linked to its own worker record ([hasWorker]):
+  /// a supervisor on the payroll keeps the staff app and also gets the worker side (own data, requests, notices).
+  bool get isWorker => hasWorker && !isAdmin && ((me?['perms'] as List?) ?? const []).isEmpty;
+  bool get hasWorker => me?['worker_id'] != null;
   /// Open tab of the worker app. The shell is keyed by the language (tr() text in const widgets would otherwise
   /// keep the old language), so the tab lives here to survive that rebuild.
   int workerTab = 0;
@@ -178,11 +181,10 @@ class Store extends ChangeNotifier {
         notifyListeners();
         return null;
       }
-      if (isWorker) {
+      if (!isWorker) await _loadState();
+      if (hasWorker) {
         await _loadWorker();
-        unawaited(Notices.register(sb, lang ?? defaultLang(myWorker)));
-      } else {
-        await _loadState();
+        unawaited(Notices.register(sb, isWorker ? lang ?? defaultLang(myWorker) : 'ar'));
       }
       notifyListeners();
       return null;
@@ -205,17 +207,23 @@ class Store extends ChangeNotifier {
     }
   }
 
-  void _watch(String table, void Function(PostgresChangePayload p) onChange) {
-    _channels.add(sb.channel('$table-${DateTime.now().microsecondsSinceEpoch}')
-        .onPostgresChanges(event: PostgresChangeEvent.all, schema: 'public', table: table, callback: onChange)
+  /// Staff live updates go to [_channels]; the worker side's (own rows only) to [_myChannels], so reloading
+  /// one never drops the other for a supervisor who has both.
+  void _watch(String table, void Function(PostgresChangePayload p) onChange, {bool mine = false}) {
+    (mine ? _myChannels : _channels).add(sb.channel('$table-${DateTime.now().microsecondsSinceEpoch}')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all, schema: 'public', table: table, callback: onChange,
+          filter: mine ? PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'worker_id', value: myWorkerId) : null,
+        )
         .subscribe());
   }
 
-  Future<void> _unwatch() async {
-    for (final c in _channels) {
+  Future<void> _unwatch({bool mine = false}) async {
+    final list = mine ? _myChannels : _channels;
+    for (final c in list) {
       await c.unsubscribe();
     }
-    _channels.clear();
+    list.clear();
   }
 
   Future<void> _loadState() async {
@@ -257,11 +265,8 @@ class Store extends ChangeNotifier {
   }
 
   Future<void> refresh() async {
-    if (isWorker) {
-      await _loadWorker();
-    } else {
-      await _loadState();
-    }
+    if (!isWorker) await _loadState();
+    if (hasWorker) await _loadWorker();
     notifyListeners();
   }
 
@@ -326,6 +331,8 @@ class Store extends ChangeNotifier {
   // ---------- Worker account (mobile portal): only the worker's own data ----------
 
   Json mine = {};
+  /// The worker's own overtime (the staff app's [entries] hold everyone's in scope).
+  List<Json> myOt = [];
   List<Json> myAtt = [], myDed = [], myAdv = [], myReq = [], mySlips = [];
   /// The worker's notifications, newest first (written by database triggers on every action — see docs/API.md).
   List<Json> myNotes = [];
@@ -333,13 +340,16 @@ class Store extends ChangeNotifier {
   Json get myWorker => Map<String, dynamic>.from((mine['worker'] as Map?) ?? {});
   String get myWorkerId => str(me?['worker_id']);
 
+  /// Only the worker's own rows: a linked supervisor could read others' too, and deductions are shown to a
+  /// worker once approved.
   Future<void> _loadWorker() async {
     mine = Map<String, dynamic>.from((await sb.rpc('my_worker')) as Map? ?? {});
+    Query own(Query q) => q.eq('worker_id', myWorkerId);
     final res = await Future.wait([
-      fetchAll('overtime'), fetchAll('attendance'), fetchAll('deductions'), fetchAll('advances'), fetchAll('requests'), fetchAll('payslips'),
-      fetchAll('notifications'),
+      fetchAll('overtime', own), fetchAll('attendance', own), fetchAll('deductions', (q) => own(q).eq('status', 'approved')),
+      fetchAll('advances', own), fetchAll('requests', own), fetchAll('payslips', own), fetchAll('notifications', own),
     ]);
-    _ot = res[0].map(otFromRow).toList();
+    myOt = res[0].map(otFromRow).toList();
     myAtt = res[1];
     myDed = res[2];
     myAdv = res[3];
@@ -347,7 +357,7 @@ class Store extends ChangeNotifier {
     mySlips = res[5]..sort((a, b) => str(b['month']).compareTo(str(a['month'])));
     myNotes = res[6]..sort((a, b) => str(b['created_at']).compareTo(str(a['created_at'])));
     await Notices.seen(myNotes);
-    await _unwatch();
+    await _unwatch(mine: true);
     // Any change to the worker's rows (a decision, a new payslip, today's sheet) reloads the portal.
     Timer? t;
     for (final table in ['overtime', 'attendance', 'deductions', 'advances', 'requests', 'payslips']) {
@@ -357,7 +367,7 @@ class Store extends ChangeNotifier {
           await _loadWorker();
           notifyListeners();
         });
-      });
+      }, mine: true);
     }
     // A new notice pops up on the phone right away (and is not shown again by the background check).
     _watch('notifications', (payload) {
@@ -366,13 +376,13 @@ class Store extends ChangeNotifier {
       myNotes = [r, ...myNotes.where((n) => n['id'] != r['id'])];
       if (r['read_at'] == null) Notices.show(r);
       notifyListeners();
-    });
+    }, mine: true);
   }
 
   /// The app came back to the foreground: iOS drops the live connection while it is in the background,
   /// so show the notices that arrived meanwhile, then reload (which also reconnects the live updates).
   Future<void> resumeWorker() async {
-    if (!isWorker || mustChangePw) return;
+    if (!hasWorker || mustChangePw) return;
     try {
       await Notices.poll();
       await _loadWorker();
@@ -421,7 +431,8 @@ class Store extends ChangeNotifier {
   Future<void> signOut() async {
     workerTab = 0;
     await _unwatch();
-    if (isWorker) await Notices.unregister(sb);
+    await _unwatch(mine: true);
+    if (hasWorker) await Notices.unregister(sb);
     await sb.auth.signOut();
     me = null;
     users = [];
@@ -429,6 +440,7 @@ class Store extends ChangeNotifier {
     _ver.clear();
     _urls.clear();
     _ot = [];
+    myOt = [];
     mine = {};
     myAtt = myDed = myAdv = myReq = mySlips = myNotes = [];
     sites = {};

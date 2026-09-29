@@ -1,3 +1,4 @@
+import 'package:creative_app/data/store.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:creative_app/core/logic.dart';
@@ -66,5 +67,16 @@ void main() {
     expect(sum((b) => b.paid), 60);
     expect(sum((b) => b.rem), 112);
     expect(balances(entries, workers, paid).fold<double>(0, (a, b) => a + b.hours), 15); // all periods
+  });
+
+  // A supervisor linked to their worker record keeps the staff app and also has the worker side.
+  test('account kinds', () {
+    store.me = {'worker_id': 'W-1', 'perms': []};
+    expect((store.isWorker, store.hasWorker), (true, true));
+    store.me = {'worker_id': 'W-1', 'perms': ['attendance']};
+    expect((store.isWorker, store.hasWorker, store.can('attendance')), (false, true, true));
+    store.me = {'worker_id': null, 'perms': ['attendance']};
+    expect((store.isWorker, store.hasWorker), (false, false));
+    store.me = null;
   });
 }

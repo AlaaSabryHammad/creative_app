@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../email_card.dart';
+import '../worker/worker_app.dart';
 import '../../core/logic.dart';
 import '../../core/theme.dart';
 import '../../data/store.dart';
@@ -101,6 +102,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 8),
         Pill(me['admin'] == true ? 'مدير النظام' : (str(me['title']).isEmpty ? 'مستخدم' : str(me['title'])), tone: Tone.blue),
       ])),
+      // A supervisor linked to their worker record: their own attendance, pay, requests and notices.
+      if (store.hasWorker) ...[
+        const SectionTitle('بياناتي كعامل'),
+        CardBox(
+          padding: EdgeInsets.zero,
+          child: ListTile(
+            leading: const Icon(Icons.badge_outlined, color: C.primary),
+            title: const Text('بياناتي وحضوري وراتبي وطلباتي', style: TextStyle(fontWeight: FontWeight.w700)),
+            subtitle: const Text('اطلب سلفة أو إجازة أو قدّم اعتراضًا، وتابع إشعارات دوامك.'),
+            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+              if (store.unread > 0) Badge(label: Text('${store.unread}')),
+              const Icon(Icons.chevron_right),  // mirrored in RTL
+            ]),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkerShell())),
+          ),
+        ),
+      ],
       const SectionTitle('البريد الإلكتروني'),
       const EmailCard(),
       const SectionTitle('تغيير كلمة المرور'),
