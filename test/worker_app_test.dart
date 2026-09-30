@@ -19,7 +19,7 @@ void main() {
         'nat': 'هندي', 'iqama': '2412345678', 'iqamaExpiry': t, 'joined': '2021-05-10', 'phone': '0551234567', 'leaveOpening': 4, 'leaveFrom': '$m-01',
         'files': [{'id': 'f1', 'name': 'licence.pdf', 'type': 'application/pdf', 'cat': 'رخصة قيادة', 'number': '1234567890', 'expiry': t}, {'id': 'f2', 'name': 'contract.pdf', 'type': 'application/pdf', 'cat': 'عقد العمل'}]},
       'project': {'id': 'p1', 'name': 'برج الريان السكني — المرحلة الثانية', 'site': 'حفر الباطن'},
-      'vehicle': {'plate': 'أ ب ج 1234', 'make': 'Toyota', 'model': 'Hilux'},
+      'vehicle': {'plate': 'أ ب ج 1234', 'make': 'Toyota', 'model': 'Hilux', 'year': '2022', 'regExpiry': t, 'insExpiry': '2030-01-01', 'files': [{'id': 'v1', 'name': 'istimara.pdf', 'type': 'application/pdf', 'cat': 'الاستمارة'}]},
       'company': {'name': 'مؤسسة إبراهيم حميدي العنزي للمقاولات'},
       'settings': {'meals': {'breakfast': 5, 'lunch': 15}},
       'paidOt': [],
@@ -87,7 +87,11 @@ void main() {
       // Account tab: the documents grid.
       await tester.tap(find.text(tr('account')).last);
       await tester.pump(const Duration(milliseconds: 400));
-      await tester.scrollUntilVisible(find.text('عقد العمل'), 200);
+      await tester.dragUntilVisible(find.text('عقد العمل'), find.byType(ListView).first, const Offset(0, -200));
+      await tester.ensureVisible(find.text(tr('myVehicle'), skipOffstage: false));
+      await tester.pump();
+      await tester.ensureVisible(find.text(tr('insExpiry'), skipOffstage: false));
+      await tester.pump();
       expect(find.text(tr('expiresIn', 0)), findsWidgets);
       // Pay tab sub-views and the request form.
       await tester.tap(find.text(tr('pay')).last);

@@ -123,6 +123,14 @@ class _WorkersScreenState extends State<WorkersScreen> {
               return (att: r[0], ot: [for (final e in store.entries) if (e['workerId'] == w['id'] && str(e['date']).compareTo(f) >= 0 && str(e['date']).compareTo(l) <= 0) e], ded: r[1], adv: r[2]);
             },
           )))),
+          if (store.vehicles.where((v) => v['driver'] == w['id']).firstOrNull case final car?) ...[
+            SectionTitle('السيارة المخصصة · ${car['plate']}'),
+            KV('السيارة', [str(car['type']), str(car['make']), str(car['model']), str(car['year'])].where((x) => x.isNotEmpty).join(' · ')),
+            if (str(car['project']).isNotEmpty) KV('المشروع', str(store.project(str(car['project']))?['name'])),
+            for (final (k, l) in [('regExpiry', 'الاستمارة'), ('insExpiry', 'التأمين'), ('inspExpiry', 'الفحص الدوري')])
+              Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Row(children: [SizedBox(width: 120, child: Text(l, style: const TextStyle(color: C.fg3, fontSize: 13))), ExpiryChip(str(car[k]), days: 30)])),
+            for (final f in (car['files'] as List?) ?? const []) FileTile(Map<String, dynamic>.from(f as Map)),
+          ],
           SectionTitle('المستندات (${files.length})'),
           if (files.isEmpty) const Text('لا توجد مستندات — صوّر الإقامة أو الرخصة أو الجواز.', style: TextStyle(color: C.fg3, fontSize: 13)),
           for (final f in files) FileTile(f),

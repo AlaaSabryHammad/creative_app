@@ -25,6 +25,7 @@ String tr(String key, [Object? n]) {
 
 const _t = <String, Map<String, String>>{
   'ar': {
+    'myVehicle': 'سيارتي', 'regExpiry': 'الاستمارة', 'insExpiry': 'التأمين', 'inspExpiry': 'الفحص الدوري',
     'nAttRejected': 'رُفض سجل حضورك بتاريخ {date} — سيُراجعه المشرف',
     'myDocs': 'مستنداتي', 'noDocs': 'لا توجد مستندات بعد', 'expired': 'منتهية', 'expiresIn': 'تنتهي خلال {n} يوم', 'validUntil': 'سارية حتى {n}',
     'myReport': 'تقرير دوامي', 'customPeriod': 'من تاريخ إلى تاريخ', 'recorded': '{n} يوم مسجّل', 'periodNet': 'صافي الفترة (تقديري)',
@@ -61,6 +62,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'تم تحديث بياناتك: {fields}', 'nVehicle': 'خُصصت لك السيارة {plate}', 'nVehicleRemoved': 'لم تعد السيارة {plate} مخصصة لك',
   },
   'en': {
+    'myVehicle': 'My vehicle', 'regExpiry': 'Registration', 'insExpiry': 'Insurance', 'inspExpiry': 'Inspection',
     'nAttRejected': 'Your attendance on {date} was rejected — your supervisor will review it',
     'myDocs': 'My documents', 'noDocs': 'No documents yet', 'expired': 'Expired', 'expiresIn': 'Expires in {n} days', 'validUntil': 'Valid until {n}',
     'myReport': 'My work report', 'customPeriod': 'Date range', 'recorded': '{n} days recorded', 'periodNet': 'Period net (estimate)',
@@ -97,6 +99,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'Your details were updated: {fields}', 'nVehicle': 'Vehicle assigned to you: {plate}', 'nVehicleRemoved': 'Vehicle {plate} is no longer assigned to you',
   },
   'ur': {
+    'myVehicle': 'میری گاڑی', 'regExpiry': 'رجسٹریشن', 'insExpiry': 'انشورنس', 'inspExpiry': 'معائنہ',
     'nAttRejected': '{date} کی حاضری مسترد — سپروائزر اس کا جائزہ لے گا',
     'myDocs': 'میری دستاویزات', 'noDocs': 'ابھی کوئی دستاویز نہیں', 'expired': 'میعاد ختم', 'expiresIn': '{n} دن میں ختم', 'validUntil': '{n} تک کارآمد',
     'myReport': 'میری حاضری رپورٹ', 'customPeriod': 'تاریخ سے تاریخ تک', 'recorded': '{n} دن درج', 'periodNet': 'مدت کا خالص (اندازہ)',
@@ -133,6 +136,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'آپ کی معلومات اپ ڈیٹ ہوئیں: {fields}', 'nVehicle': 'آپ کو گاڑی دی گئی: {plate}', 'nVehicleRemoved': 'گاڑی {plate} اب آپ کے پاس نہیں',
   },
   'hi': {
+    'myVehicle': 'मेरी गाड़ी', 'regExpiry': 'पंजीकरण', 'insExpiry': 'बीमा', 'inspExpiry': 'निरीक्षण',
     'nAttRejected': '{date} की हाज़िरी अस्वीकृत — सुपरवाइज़र इसकी समीक्षा करेगा',
     'myDocs': 'मेरे दस्तावेज़', 'noDocs': 'अभी कोई दस्तावेज़ नहीं', 'expired': 'समाप्त', 'expiresIn': '{n} दिन में समाप्त', 'validUntil': '{n} तक मान्य',
     'myReport': 'मेरी काम रिपोर्ट', 'customPeriod': 'तारीख से तारीख तक', 'recorded': '{n} दिन दर्ज', 'periodNet': 'अवधि का शुद्ध (अनुमान)',
@@ -169,6 +173,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'आपकी जानकारी अपडेट हुई: {fields}', 'nVehicle': 'आपको गाड़ी दी गई: {plate}', 'nVehicleRemoved': 'गाड़ी {plate} अब आपको नहीं दी गई है',
   },
   'bn': {
+    'myVehicle': 'আমার গাড়ি', 'regExpiry': 'নিবন্ধন', 'insExpiry': 'বীমা', 'inspExpiry': 'পরিদর্শন',
     'nAttRejected': '{date} তারিখের হাজিরা বাতিল — সুপারভাইজার এটি দেখবেন',
     'myDocs': 'আমার কাগজপত্র', 'noDocs': 'এখনও কোনো কাগজপত্র নেই', 'expired': 'মেয়াদোত্তীর্ণ', 'expiresIn': '{n} দিনে মেয়াদ শেষ', 'validUntil': '{n} পর্যন্ত বৈধ',
     'myReport': 'আমার কাজের রিপোর্ট', 'customPeriod': 'তারিখ থেকে তারিখ', 'recorded': '{n} দিন রেকর্ড', 'periodNet': 'সময়ের নিট (আনুমানিক)',
@@ -205,6 +210,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'আপনার তথ্য হালনাগাদ হয়েছে: {fields}', 'nVehicle': 'আপনাকে গাড়ি দেওয়া হয়েছে: {plate}', 'nVehicleRemoved': 'গাড়ি {plate} আর আপনার নামে নেই',
   },
   'ne': {
+    'myVehicle': 'मेरो गाडी', 'regExpiry': 'दर्ता', 'insExpiry': 'बीमा', 'inspExpiry': 'निरीक्षण',
     'nAttRejected': '{date} को हाजिरी अस्वीकृत — सुपरभाइजरले हेर्नुहुनेछ',
     'myDocs': 'मेरा कागजातहरू', 'noDocs': 'अहिले कुनै कागजात छैन', 'expired': 'म्याद सकियो', 'expiresIn': '{n} दिनमा म्याद सकिन्छ', 'validUntil': '{n} सम्म मान्य',
     'myReport': 'मेरो कामको रिपोर्ट', 'customPeriod': 'मिति देखि मिति सम्म', 'recorded': '{n} दिन दर्ता', 'periodNet': 'अवधिको खुद (अनुमान)',

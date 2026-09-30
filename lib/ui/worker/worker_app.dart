@@ -552,6 +552,8 @@ class _Account extends StatelessWidget {
     final w = store.myWorker;
     final files = [for (final f in (w['files'] as List?) ?? const []) Map<String, dynamic>.from(f as Map)];
     final project = str((store.mine['project'] as Map?)?['name']);
+    final car = store.mine['vehicle'] as Map?;
+    final carFiles = [for (final f in (car?['files'] as List?) ?? const []) Map<String, dynamic>.from(f as Map)];
     Widget info(IconData icon, String k, String v, {Widget? trailing}) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 7),
           child: Row(children: [
@@ -618,8 +620,30 @@ class _Account extends StatelessWidget {
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
           childAspectRatio: .78,
-          children: [for (final f in files) _DocCard(f, onOpen: () => str(f['type']).startsWith('image/') ? _view(context, str(f['id']), str(f['cat']).isEmpty ? str(f['name']) : str(f['cat'])) : openStoredFile(context, f))],
+          children: [for (final f in files) _DocCard(f, onOpen: () => _open(context, f))],
         ),
+      if (car != null) ...[
+        SectionTitle(tr('myVehicle')),
+        CardBox(
+          child: Column(children: [
+            info(Icons.directions_car_outlined, 'vehicle', [str(car['plate']), str(car['make']), str(car['model']), str(car['year'])].where((x) => x.isNotEmpty).join(' · ')),
+            for (final (k, icon) in [('regExpiry', Icons.article_outlined), ('insExpiry', Icons.verified_user_outlined), ('inspExpiry', Icons.build_circle_outlined)])
+              if (str(car[k]).isNotEmpty) info(icon, k, wDate(str(car[k]), year: true), trailing: _expiry(str(car[k]))),
+          ]),
+        ),
+        if (carFiles.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: .78,
+            children: [for (final f in carFiles) _DocCard(f, onOpen: () => _open(context, f))],
+          ),
+        ],
+      ],
       // A supervisor opens this portal from their staff profile, which already has these account settings.
       if (store.isWorker) ...[
       SectionTitle(tr('email')),
@@ -647,6 +671,10 @@ class _Account extends StatelessWidget {
       ],
     ]);
   }
+
+  /// Images open full screen, other files in the phone's viewer.
+  void _open(BuildContext context, Json f) =>
+      str(f['type']).startsWith('image/') ? _view(context, str(f['id']), str(f['cat']).isEmpty ? str(f['name']) : str(f['cat'])) : openStoredFile(context, f);
 
   /// Full-screen, zoomable view of a stored image.
   void _view(BuildContext context, String id, String title) => Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(
