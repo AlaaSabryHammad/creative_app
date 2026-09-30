@@ -53,7 +53,7 @@ void main() {
     final p = payslip(worker: w, month: '2026-09', attendance: att, overtime: ot, deductions: ded, advances: adv, paidOtIds: {'OT-3'}, s: s);
     expect(p['days'], {'recorded': 30, 'present': 27, 'absent': 2, 'leave': 1, 'sick': 0, 'off': 0});
     expect(p['absence'], 200);
-    expect(p['meals'], {'breakfast': 18, 'lunch': 16, 'amount': 330});
+    expect(p['meals'], {'breakfast': 18, 'lunch': 16, 'amount': 330, 'breakfastAmount': 90, 'lunchAmount': 240});
     expect([p['overtime']['hours'], p['overtime']['amount'], p['overtime']['paidSeparately']], [10, 187.5, 37.5]);
     expect(p['otIds'], ['OT-1', 'OT-2']);
     expect(p['deductionsTotal'], 62.5);

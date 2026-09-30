@@ -1,6 +1,8 @@
 import 'package:creative_app/data/llm.dart';
 import 'package:creative_app/data/store.dart';
+import 'package:creative_app/ui/screens/payroll_pdf.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:creative_app/core/logic.dart';
 import 'package:creative_app/core/pay.dart';
@@ -110,5 +112,20 @@ void main() {
     expect((c.assistant?.provider, c.assistant?.model), ('deepseek', 'ds-1'));
     expect((c.documents?.provider, c.documents?.model), ('gemini', 'gm-1'));
     expect(aiConfig(null).assistant, isNull);
+  });
+
+  test('payroll PDF report: one row per worker, meals split, totals', () async {
+    await initializeDateFormatting('ar');
+    final html = payrollHtml([
+      {'name': 'A <b>', 'base': 2000, 'days': {'present': 26}, 'meals': {'breakfast': 26, 'lunch': 26, 'amount': 520, 'breakfastAmount': 130, 'lunchAmount': 390},
+        'overtime': {'hours': 35, 'amount': 269.23}, 'totalDeductions': 0, 'net': 2789.23},
+      {'name': 'B', 'base': 1500, 'days': {'present': 20}, 'meals': {'breakfast': 2, 'lunch': 0, 'amount': 10}, 'overtime': {'hours': 0, 'amount': 0}, 'totalDeductions': 100, 'net': 1410},
+    ], '2026-10', '2026-09-26', '2026-10-25', 'Co');
+    expect(html, contains('A &lt;b&gt;'));                        // names are escaped
+    expect(html, contains('<td>130.00</td><td>26</td><td>390.00</td>'));
+    expect(html, contains('<td>789.23</td>'));                     // additions = overtime + meals
+    expect(html, contains('<td class="net">2789.23</td>'));
+    expect(html, contains('26-09-2026 - 25-10-2026'));
+    expect(html, contains('<td>4199.23</td>'));                    // total net
   });
 }

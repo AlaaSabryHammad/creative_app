@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart' show PdfPageFormat;
+import 'package:printing/printing.dart';
 import '../../core/logic.dart';
 import '../../core/pay.dart';
 import '../../core/theme.dart';
 import '../../data/store.dart';
 import '../report.dart';
 import '../widgets.dart';
+import 'payroll_pdf.dart';
 
 /// Salary payroll for a month (web: src/payroll.jsx): the approved payslips, or a live draft.
 /// Approving and reopening a month is done on the website.
@@ -18,6 +21,7 @@ class PayrollScreen extends StatefulWidget {
 class _PayrollScreenState extends State<PayrollScreen> {
   Period _per = Period(periodMonth(todayIso(), store.pay.startDay));
   String _span = '';  // the approved run's period
+  (String, String)? _runDates;
   bool _loading = true;
   bool _approved = false;
   List<Json> _slips = [];
@@ -51,6 +55,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
     if (!mounted || _per.month != month) return;
     final run = approved ? r[0].first : null;
     _span = run == null || run['date_from'] == null ? '' : '${fmtDate(str(run['date_from']))} — ${fmtDate(str(run['date_to']))}';
+    _runDates = run == null || run['date_from'] == null ? null : (str(run['date_from']), str(run['date_to']));
     setState(() { _approved = approved; _slips = slips..sort((a, b) => str(a['workerId']).compareTo(str(b['workerId']))); _loading = false; });
   }
 
@@ -73,6 +78,21 @@ class _PayrollScreenState extends State<PayrollScreen> {
             StatTile(tone: Tone.orange, icon: Icons.payments_outlined, label: 'صافي الرواتب', value: money(tot('net')), sub: '${_slips.length} عامل'),
             StatTile(tone: Tone.green, icon: Icons.restaurant_outlined, label: 'بدل الوجبات', value: money(_slips.fold<double>(0, (a, p) => a + toNum(p['meals']['amount'])))),
           ]),
+          const SizedBox(height: 10),
+          if (!_loading && _slips.isNotEmpty)
+            OutlinedButton.icon(
+              icon: const Icon(Icons.picture_as_pdf_outlined),
+              label: const Text('تصدير PDF'),
+              onPressed: () {
+                final (f, l) = _runDates ?? _per.bounds(store.pay.startDay);
+                final html = payrollHtml(_slips, _per.month, f, l, str(store.company['name']));
+                Printing.layoutPdf(name: 'مسير رواتب ${_per.month}', format: PdfPageFormat.a4.landscape,
+                    // ponytail: convertHtml is deprecated but still works on Android/iOS and keeps the web's design;
+                    // rebuild with package:pdf widgets (and an Arabic font) if printing drops it.
+                    // ignore: deprecated_member_use
+                    onLayout: (format) => Printing.convertHtml(format: format, html: html));
+              },
+            ),
           const SizedBox(height: 12),
           if (_loading) const Center(child: Padding(padding: EdgeInsets.all(30), child: CircularProgressIndicator())),
           if (!_loading && _slips.isEmpty) const CardBox(child: EmptyState('لا يوجد عمال في هذا المسيّر')),
