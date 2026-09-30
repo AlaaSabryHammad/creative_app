@@ -5,6 +5,9 @@ import '../../core/logic.dart';
 import '../../core/pay.dart';
 import '../../data/store.dart';
 
+/// The landing page's logo (web: src/assets/creative-logo.png), embedded so the report needs no network.
+Future<String> printLogo() async => 'data:image/png;base64,${base64Encode((await rootBundle.load('assets/print-logo.png')).buffer.asUint8List())}';
+
 /// Print font: IBM Plex Sans Arabic (web: PRINT_FONT in src/payroll.jsx), embedded so the report needs no network.
 Future<String> printFontCss() async {
   final faces = <String>[];
@@ -19,7 +22,7 @@ Future<String> printFontCss() async {
 }
 
 /// The payroll as a landscape report, one row per worker (web: exportPdf in src/payroll.jsx; keep in step).
-String payrollHtml(List<Json> slips, String month, String from, String to, String company, {String fontCss = ''}) {
+String payrollHtml(List<Json> slips, String month, String from, String to, String company, {String fontCss = '', String logo = ''}) {
   final e = const HtmlEscape().convert;
   String n(num v) => round2(v).toStringAsFixed(2);
   String dmy(String d) => d.split('-').reversed.join('-');
@@ -60,7 +63,7 @@ String payrollHtml(List<Json> slips, String month, String from, String to, Strin
       'tfoot td{background:#e2e8f0;font-weight:700}'
       '</style></head><body>'
       '<header><div><h1>مسير رواتب $title</h1><div class="meta">${e(company)}<br>الفترة: <bdi dir="ltr">${dmy(from)} - ${dmy(to)}</bdi><br>عدد العمال: ${slips.length}</div></div>'
-      '<img src="https://overtime.alhemedy.com/logo.png" alt=""></header>'
+      '${logo.isEmpty ? '' : '<img src="$logo" alt="">'}</header>'
       '<table><thead><tr>$head</tr></thead><tbody>$rows</tbody><tfoot><tr>$foot</tr></tfoot></table>'
       '</body></html>';
 }

@@ -85,7 +85,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
               label: const Text('تصدير PDF'),
               onPressed: () async {
                 final (f, l) = _runDates ?? _per.bounds(store.pay.startDay);
-                final html = payrollHtml(_slips, _per.month, f, l, str(store.company['name']), fontCss: await printFontCss());
+                final html = payrollHtml(_slips, _per.month, f, l, str(store.company['name']), fontCss: await printFontCss(), logo: await printLogo());
                 Printing.layoutPdf(name: 'مسير رواتب ${_per.month}', format: PdfPageFormat.a4.landscape,
                     // ponytail: convertHtml is deprecated but still works on Android/iOS and keeps the web's design;
                     // rebuild with package:pdf widgets (and an Arabic font) if printing drops it.
