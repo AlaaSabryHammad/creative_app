@@ -550,28 +550,76 @@ class _Account extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final w = store.myWorker;
-    Widget kv(String k, String v) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            SizedBox(width: 130, child: Text(tr(k), style: const TextStyle(color: C.fg3))),
-            Expanded(child: Text(v.isEmpty ? '—' : v, style: const TextStyle(fontWeight: FontWeight.w600))),
+    final files = [for (final f in (w['files'] as List?) ?? const []) Map<String, dynamic>.from(f as Map)];
+    final project = str((store.mine['project'] as Map?)?['name']);
+    Widget info(IconData icon, String k, String v, {Widget? trailing}) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 7),
+          child: Row(children: [
+            Container(width: 40, height: 40, decoration: BoxDecoration(color: C.primary50, borderRadius: BorderRadius.circular(12)), child: Icon(icon, size: 20, color: C.primary700)),
+            const SizedBox(width: 12),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(tr(k), style: const TextStyle(fontSize: 12, color: C.fg3)),
+              Text(v.isEmpty ? '—' : v, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            ])),
+            if (trailing != null) Flexible(child: trailing),
           ]),
         );
     return ListView(padding: const EdgeInsets.all(16), children: [
+      Container(
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(begin: AlignmentDirectional.topStart, end: AlignmentDirectional.bottomEnd, colors: [C.ink, C.navy]),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [BoxShadow(color: C.ink.withValues(alpha: .25), blurRadius: 18, offset: const Offset(0, 8))],
+        ),
+        child: Column(children: [
+          GestureDetector(
+            onTap: str(w['photo']).isEmpty ? null : () => _view(context, str(w['photo']), str(w['name'])),
+            child: Container(
+              padding: const EdgeInsets.all(3),
+              decoration: const BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [C.gold, C.goldLight])),
+              child: Container(padding: const EdgeInsets.all(3), decoration: const BoxDecoration(shape: BoxShape.circle, color: C.ink), child: WorkerPhoto(w['photo'], size: 108)),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(str(w['name']), textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 4),
+          Text([str(w['trade']), str(w['id'])].where((x) => x.isNotEmpty).join(' · '), style: TextStyle(color: Colors.white.withValues(alpha: .75))),
+          if (project.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: .12), borderRadius: BorderRadius.circular(99)),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.apartment_outlined, size: 16, color: C.goldLight),
+                const SizedBox(width: 6),
+                Flexible(child: Text(project, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+              ]),
+            ),
+          ],
+        ]),
+      ),
       SectionTitle(tr('myData')),
       CardBox(
         child: Column(children: [
-          kv('name', str(w['name'])),
-          kv('workerId', str(w['id'])),
-          kv('trade', str(w['trade'])),
-          kv('project', str((store.mine['project'] as Map?)?['name'])),
-          kv('nationality', str(w['nat'])),
-          kv('iqama', str(w['iqama'])),
-          kv('iqamaExpiry', wDate(str(w['iqamaExpiry']), year: true)),
-          kv('joined', wDate(str(w['joined']), year: true)),
-          kv('phone', str(w['phone'])),
+          info(Icons.badge_outlined, 'iqama', str(w['iqama']), trailing: _expiry(str(w['iqamaExpiry']))),
+          info(Icons.public, 'nationality', str(w['nat'])),
+          info(Icons.event_available_outlined, 'joined', str(w['joined']).isEmpty ? '' : wDate(str(w['joined']), year: true)),
+          info(Icons.phone_outlined, 'phone', str(w['phone'])),
         ]),
       ),
+      SectionTitle('${tr('myDocs')} (${files.length})'),
+      if (files.isEmpty) CardBox(child: EmptyState(tr('noDocs'), icon: Icons.folder_open_outlined)),
+      if (files.isNotEmpty)
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: .78,
+          children: [for (final f in files) _DocCard(f, onOpen: () => str(f['type']).startsWith('image/') ? _view(context, str(f['id']), str(f['cat']).isEmpty ? str(f['name']) : str(f['cat'])) : openStoredFile(context, f))],
+        ),
       // A supervisor opens this portal from their staff profile, which already has these account settings.
       if (store.isWorker) ...[
       SectionTitle(tr('email')),
@@ -600,6 +648,18 @@ class _Account extends StatelessWidget {
     ]);
   }
 
+  /// Full-screen, zoomable view of a stored image.
+  void _view(BuildContext context, String id, String title) => Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(backgroundColor: Colors.black, foregroundColor: Colors.white, title: Text(title)),
+        body: FutureBuilder<String?>(
+          future: store.fileUrl(id),
+          builder: (c, u) => u.data == null
+              ? const Center(child: CircularProgressIndicator())
+              : InteractiveViewer(maxScale: 5, child: Center(child: Image.network(u.data!, fit: BoxFit.contain))),
+        ),
+      )));
+
   Future<void> _password(BuildContext context) async {
     final cur = TextEditingController(), next = TextEditingController();
     final ok = await showDialog<bool>(
@@ -618,5 +678,52 @@ class _Account extends StatelessWidget {
     if (n.length < 8 || !RegExp(r'\d').hasMatch(n) || !RegExp(r'[^\d\s]').hasMatch(n)) return toast(context, tr('passwordRule'), bad: true);
     final err = await store.changePassword(cur.text, n);
     if (context.mounted) toast(context, err == null ? tr('passwordChanged') : tr('error'), bad: err != null);
+  }
+}
+
+/// Valid / due soon / expired, in the worker's language.
+Widget? _expiry(String date) {
+  if (date.isEmpty) return null;
+  final n = daysLeft(date);
+  return n < 0 ? Pill(tr('expired'), tone: Tone.red) : n <= 30 ? Pill(tr('expiresIn', n), tone: Tone.orange) : Pill(tr('validUntil', wDate(date, year: true)), tone: Tone.green);
+}
+
+/// One of the worker's documents: a preview of the image (or the PDF icon), its type, number and expiry.
+class _DocCard extends StatelessWidget {
+  final Json f;
+  final VoidCallback onOpen;
+  const _DocCard(this.f, {required this.onOpen});
+  @override
+  Widget build(BuildContext context) {
+    final image = str(f['type']).startsWith('image/');
+    final icon = Center(child: Icon(image ? Icons.image_outlined : Icons.picture_as_pdf_outlined, size: 40, color: image ? C.slate400 : C.danger));
+    return CardBox(
+      padding: EdgeInsets.zero,
+      onTap: onOpen,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Expanded(
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: Container(
+              color: C.slate100,
+              child: !image
+                  ? icon
+                  : FutureBuilder<String?>(
+                      future: store.fileUrl(str(f['id'])),
+                      builder: (c, u) => u.data == null ? icon : Image.network(u.data!, fit: BoxFit.cover, errorBuilder: (_, _, _) => icon),
+                    ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(10),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(str(f['cat']).isEmpty ? str(f['name']) : str(f['cat']), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)),
+            if (str(f['number']).isNotEmpty) Text('# ${f['number']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: C.fg3)),
+            if (_expiry(str(f['expiry'])) != null) Padding(padding: const EdgeInsets.only(top: 6), child: _expiry(str(f['expiry']))),
+          ]),
+        ),
+      ]),
+    );
   }
 }

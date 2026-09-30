@@ -16,7 +16,8 @@ void main() {
     store.me = {'id': 'u1', 'name': 'Rajesh Kumar', 'worker_id': 'W-1002', 'active': true};
     store.mine = {
       'worker': {'id': 'W-1002', 'name': 'Rajesh Kumar Subramanian', 'trade': 'حدّاد مسلح', 'p': 'p1', 'salary': 2400, 'rateMode': 'auto', 'rate': 15,
-        'nat': 'هندي', 'iqama': '2412345678', 'iqamaExpiry': t, 'joined': '2021-05-10', 'phone': '0551234567', 'leaveOpening': 4, 'leaveFrom': '$m-01'},
+        'nat': 'هندي', 'iqama': '2412345678', 'iqamaExpiry': t, 'joined': '2021-05-10', 'phone': '0551234567', 'leaveOpening': 4, 'leaveFrom': '$m-01',
+        'files': [{'id': 'f1', 'name': 'licence.pdf', 'type': 'application/pdf', 'cat': 'رخصة قيادة', 'number': '1234567890', 'expiry': t}, {'id': 'f2', 'name': 'contract.pdf', 'type': 'application/pdf', 'cat': 'عقد العمل'}]},
       'project': {'id': 'p1', 'name': 'برج الريان السكني — المرحلة الثانية', 'site': 'حفر الباطن'},
       'vehicle': {'plate': 'أ ب ج 1234', 'make': 'Toyota', 'model': 'Hilux'},
       'company': {'name': 'مؤسسة إبراهيم حميدي العنزي للمقاولات'},
@@ -83,6 +84,11 @@ void main() {
       expect(find.text(tr('periodNet')), findsOneWidget);
       tester.state<NavigatorState>(find.byType(Navigator).first).pop();
       await tester.pumpAndSettle();
+      // Account tab: the documents grid.
+      await tester.tap(find.text(tr('account')).last);
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.scrollUntilVisible(find.text('عقد العمل'), 200);
+      expect(find.text(tr('expiresIn', 0)), findsWidgets);
       // Pay tab sub-views and the request form.
       await tester.tap(find.text(tr('pay')).last);
       await tester.pump(const Duration(milliseconds: 400));

@@ -25,6 +25,7 @@ String tr(String key, [Object? n]) {
 
 const _t = <String, Map<String, String>>{
   'ar': {
+    'myDocs': 'مستنداتي', 'noDocs': 'لا توجد مستندات بعد', 'expired': 'منتهية', 'expiresIn': 'تنتهي خلال {n} يوم', 'validUntil': 'سارية حتى {n}',
     'myReport': 'تقرير دوامي', 'customPeriod': 'من تاريخ إلى تاريخ', 'recorded': '{n} يوم مسجّل', 'periodNet': 'صافي الفترة (تقديري)',
     'email': 'البريد الإلكتروني', 'addEmail': 'إضافة بريد إلكتروني', 'changeEmail': 'تغيير البريد', 'emailNone': 'لم يُضف بعد', 'emailNote': 'بعد تأكيد البريد يمكنك الدخول برقم الهوية أو بالبريد.', 'emailPending': 'افتح رابط التأكيد المرسل إلى {n}. لن يُستخدم البريد قبل تأكيده.', 'emailInvalid': 'أدخل بريدًا إلكترونيًا صحيحًا', 'emailTaken': 'هذا البريد مستخدم لحساب آخر', 'sendLink': 'إرسال رابط التأكيد',
     'firstLogin': 'أول دخول — غيّر كلمة المرور', 'firstLoginNote': 'حسابك يستخدم كلمة مرور مؤقتة. اختر كلمة مرور خاصة بك للمتابعة.', 'confirmPassword': 'تأكيد كلمة المرور', 'passwordMismatch': 'كلمتا المرور غير متطابقتين', 'passwordSame': 'اختر كلمة مرور مختلفة عن المؤقتة', 'saveContinue': 'حفظ والمتابعة',
@@ -59,6 +60,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'تم تحديث بياناتك: {fields}', 'nVehicle': 'خُصصت لك السيارة {plate}', 'nVehicleRemoved': 'لم تعد السيارة {plate} مخصصة لك',
   },
   'en': {
+    'myDocs': 'My documents', 'noDocs': 'No documents yet', 'expired': 'Expired', 'expiresIn': 'Expires in {n} days', 'validUntil': 'Valid until {n}',
     'myReport': 'My work report', 'customPeriod': 'Date range', 'recorded': '{n} days recorded', 'periodNet': 'Period net (estimate)',
     'email': 'Email', 'addEmail': 'Add email', 'changeEmail': 'Change email', 'emailNone': 'Not added yet', 'emailNote': 'After confirming your email you can sign in with your ID number or your email.', 'emailPending': 'Open the confirmation link sent to {n}. The email is not used until it is confirmed.', 'emailInvalid': 'Enter a valid email', 'emailTaken': 'This email is used by another account', 'sendLink': 'Send confirmation link',
     'firstLogin': 'First sign-in — change your password', 'firstLoginNote': 'Your account uses a temporary password. Choose your own password to continue.', 'confirmPassword': 'Confirm password', 'passwordMismatch': 'Passwords do not match', 'passwordSame': 'Choose a password different from the temporary one', 'saveContinue': 'Save and continue',
@@ -93,6 +95,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'Your details were updated: {fields}', 'nVehicle': 'Vehicle assigned to you: {plate}', 'nVehicleRemoved': 'Vehicle {plate} is no longer assigned to you',
   },
   'ur': {
+    'myDocs': 'میری دستاویزات', 'noDocs': 'ابھی کوئی دستاویز نہیں', 'expired': 'میعاد ختم', 'expiresIn': '{n} دن میں ختم', 'validUntil': '{n} تک کارآمد',
     'myReport': 'میری حاضری رپورٹ', 'customPeriod': 'تاریخ سے تاریخ تک', 'recorded': '{n} دن درج', 'periodNet': 'مدت کا خالص (اندازہ)',
     'email': 'ای میل', 'addEmail': 'ای میل شامل کریں', 'changeEmail': 'ای میل تبدیل کریں', 'emailNone': 'ابھی شامل نہیں کیا', 'emailNote': 'ای میل کی تصدیق کے بعد آپ شناختی نمبر یا ای میل سے لاگ ان کر سکتے ہیں۔', 'emailPending': '{n} پر بھیجا گیا تصدیقی لنک کھولیں۔ تصدیق سے پہلے ای میل استعمال نہیں ہوگا۔', 'emailInvalid': 'درست ای میل درج کریں', 'emailTaken': 'یہ ای میل کسی اور اکاؤنٹ میں استعمال ہو رہا ہے', 'sendLink': 'تصدیقی لنک بھیجیں',
     'firstLogin': 'پہلا لاگ ان — پاس ورڈ تبدیل کریں', 'firstLoginNote': 'آپ کا اکاؤنٹ عارضی پاس ورڈ استعمال کر رہا ہے۔ جاری رکھنے کے لیے اپنا پاس ورڈ منتخب کریں۔', 'confirmPassword': 'پاس ورڈ کی تصدیق کریں', 'passwordMismatch': 'پاس ورڈ مماثل نہیں ہیں', 'passwordSame': 'عارضی پاس ورڈ سے مختلف پاس ورڈ منتخب کریں', 'saveContinue': 'محفوظ کریں اور جاری رکھیں',
@@ -127,6 +130,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'آپ کی معلومات اپ ڈیٹ ہوئیں: {fields}', 'nVehicle': 'آپ کو گاڑی دی گئی: {plate}', 'nVehicleRemoved': 'گاڑی {plate} اب آپ کے پاس نہیں',
   },
   'hi': {
+    'myDocs': 'मेरे दस्तावेज़', 'noDocs': 'अभी कोई दस्तावेज़ नहीं', 'expired': 'समाप्त', 'expiresIn': '{n} दिन में समाप्त', 'validUntil': '{n} तक मान्य',
     'myReport': 'मेरी काम रिपोर्ट', 'customPeriod': 'तारीख से तारीख तक', 'recorded': '{n} दिन दर्ज', 'periodNet': 'अवधि का शुद्ध (अनुमान)',
     'email': 'ईमेल', 'addEmail': 'ईमेल जोड़ें', 'changeEmail': 'ईमेल बदलें', 'emailNone': 'अभी नहीं जोड़ा गया', 'emailNote': 'ईमेल की पुष्टि के बाद आप आईडी नंबर या ईमेल से लॉगिन कर सकते हैं।', 'emailPending': '{n} पर भेजा गया पुष्टि लिंक खोलें। पुष्टि से पहले ईमेल का उपयोग नहीं होगा।', 'emailInvalid': 'सही ईमेल दर्ज करें', 'emailTaken': 'यह ईमेल किसी दूसरे खाते में उपयोग हो रहा है', 'sendLink': 'पुष्टि लिंक भेजें',
     'firstLogin': 'पहला लॉगिन — पासवर्ड बदलें', 'firstLoginNote': 'आपका खाता अस्थायी पासवर्ड का उपयोग कर रहा है। जारी रखने के लिए अपना पासवर्ड चुनें।', 'confirmPassword': 'पासवर्ड की पुष्टि करें', 'passwordMismatch': 'पासवर्ड मेल नहीं खाते', 'passwordSame': 'अस्थायी पासवर्ड से अलग पासवर्ड चुनें', 'saveContinue': 'सेव करें और जारी रखें',
@@ -161,6 +165,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'आपकी जानकारी अपडेट हुई: {fields}', 'nVehicle': 'आपको गाड़ी दी गई: {plate}', 'nVehicleRemoved': 'गाड़ी {plate} अब आपको नहीं दी गई है',
   },
   'bn': {
+    'myDocs': 'আমার কাগজপত্র', 'noDocs': 'এখনও কোনো কাগজপত্র নেই', 'expired': 'মেয়াদোত্তীর্ণ', 'expiresIn': '{n} দিনে মেয়াদ শেষ', 'validUntil': '{n} পর্যন্ত বৈধ',
     'myReport': 'আমার কাজের রিপোর্ট', 'customPeriod': 'তারিখ থেকে তারিখ', 'recorded': '{n} দিন রেকর্ড', 'periodNet': 'সময়ের নিট (আনুমানিক)',
     'email': 'ইমেইল', 'addEmail': 'ইমেইল যোগ করুন', 'changeEmail': 'ইমেইল পরিবর্তন করুন', 'emailNone': 'এখনও যোগ করা হয়নি', 'emailNote': 'ইমেইল নিশ্চিত করার পর আপনি আইডি নম্বর বা ইমেইল দিয়ে লগইন করতে পারবেন।', 'emailPending': '{n} এ পাঠানো নিশ্চিতকরণ লিংক খুলুন। নিশ্চিত না হওয়া পর্যন্ত ইমেইল ব্যবহার হবে না।', 'emailInvalid': 'সঠিক ইমেইল লিখুন', 'emailTaken': 'এই ইমেইল অন্য অ্যাকাউন্টে ব্যবহৃত হচ্ছে', 'sendLink': 'নিশ্চিতকরণ লিংক পাঠান',
     'firstLogin': 'প্রথম লগইন — পাসওয়ার্ড পরিবর্তন করুন', 'firstLoginNote': 'আপনার অ্যাকাউন্টে একটি অস্থায়ী পাসওয়ার্ড আছে। চালিয়ে যেতে নিজের পাসওয়ার্ড বেছে নিন।', 'confirmPassword': 'পাসওয়ার্ড নিশ্চিত করুন', 'passwordMismatch': 'পাসওয়ার্ড মিলছে না', 'passwordSame': 'অস্থায়ী পাসওয়ার্ড থেকে আলাদা পাসওয়ার্ড বেছে নিন', 'saveContinue': 'সংরক্ষণ করে এগিয়ে যান',
@@ -195,6 +200,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'আপনার তথ্য হালনাগাদ হয়েছে: {fields}', 'nVehicle': 'আপনাকে গাড়ি দেওয়া হয়েছে: {plate}', 'nVehicleRemoved': 'গাড়ি {plate} আর আপনার নামে নেই',
   },
   'ne': {
+    'myDocs': 'मेरा कागजातहरू', 'noDocs': 'अहिले कुनै कागजात छैन', 'expired': 'म्याद सकियो', 'expiresIn': '{n} दिनमा म्याद सकिन्छ', 'validUntil': '{n} सम्म मान्य',
     'myReport': 'मेरो कामको रिपोर्ट', 'customPeriod': 'मिति देखि मिति सम्म', 'recorded': '{n} दिन दर्ता', 'periodNet': 'अवधिको खुद (अनुमान)',
     'email': 'इमेल', 'addEmail': 'इमेल थप्नुहोस्', 'changeEmail': 'इमेल परिवर्तन गर्नुहोस्', 'emailNone': 'अझै थपिएको छैन', 'emailNote': 'इमेल पुष्टि भएपछि तपाईं आईडी नम्बर वा इमेलबाट लगइन गर्न सक्नुहुन्छ।', 'emailPending': '{n} मा पठाइएको पुष्टि लिंक खोल्नुहोस्। पुष्टि नभएसम्म इमेल प्रयोग हुँदैन।', 'emailInvalid': 'सही इमेल लेख्नुहोस्', 'emailTaken': 'यो इमेल अर्को खातामा प्रयोग भइरहेको छ', 'sendLink': 'पुष्टि लिंक पठाउनुहोस्',
     'firstLogin': 'पहिलो लगइन — पासवर्ड परिवर्तन गर्नुहोस्', 'firstLoginNote': 'तपाईंको खाताले अस्थायी पासवर्ड प्रयोग गर्दैछ। जारी राख्न आफ्नै पासवर्ड छान्नुहोस्।', 'confirmPassword': 'पासवर्ड पुष्टि गर्नुहोस्', 'passwordMismatch': 'पासवर्ड मिलेन', 'passwordSame': 'अस्थायी पासवर्डभन्दा फरक पासवर्ड छान्नुहोस्', 'saveContinue': 'सुरक्षित गरी जारी राख्नुहोस्',
