@@ -1,12 +1,17 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/i18n.dart' show defaultLang, tr;
 import '../core/logic.dart';
 import '../core/pay.dart';
 import 'llm.dart';
 import 'notices.dart';
+
+/// The web server's file store (web: public/files.php).
+const filesUrl = 'https://overtime.alhemedy.com/files.php';
 
 const sbUrl = 'https://sxkmcctluvomwapwomwz.supabase.co';
 const sbKey = 'sb_publishable_m6GNJRur4Apt7LfOD89U_g_FD63Ut7g';
@@ -325,10 +330,17 @@ class Store extends ChangeNotifier {
       _run(() async => sb.rpc('decide_request', params: {'p_id': id, 'p_approve': approve, 'p_reply': reply}));
   // ---------- Documents and record edits from the phone (projects' claims, workers and their documents) ----------
 
-  /// Uploads a file to the private bucket; returns its file entry (as the web's useOTFileDraft makes).
+  /// Uploads a file to the web server's file store (web: src/storage.js, public/files.php); returns its file entry
+  /// (as the web's useOTFileDraft makes).
   Future<Json> uploadFile(Uint8List bytes, String name, String mime) async {
     final id = 'f-${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}${Random().nextInt(1 << 30).toRadixString(36)}';
-    await sb.storage.from('files').uploadBinary(id, bytes, fileOptions: FileOptions(contentType: mime, upsert: true));
+    final http.Response r;
+    try {
+      r = await http.post(Uri.parse('$filesUrl?op=put&id=$id'), headers: {'X-Auth': sb.auth.currentSession?.accessToken ?? '', 'Content-Type': mime}, body: bytes);
+    } catch (_) {
+      throw 'تعذّر الاتصال بخادم الملفات. تحقق من الإنترنت.';
+    }
+    if (r.statusCode != 200) throw 'تعذّر رفع الملف: ${_serverError(r)}';
     return {'id': id, 'name': name, 'type': mime, 'size': bytes.length, 'date': todayIso(), 'cat': ''};
   }
 
@@ -474,8 +486,22 @@ class Store extends ChangeNotifier {
 
   // ---------- Session ----------
 
-  /// Signed URL for a private file (cached for the session; links last one hour).
-  Future<String?> fileUrl(String id) => _urls.putIfAbsent(id, () => sb.storage.from('files').createSignedUrl(id, 3600).then<String?>((u) => u).catchError((_) => null));
+  /// Signed link to a stored file (cached for the session; links last one hour), or null when not allowed.
+  Future<String?> fileUrl(String id) => _urls.putIfAbsent(id, () async {
+        try {
+          final r = await http.get(Uri.parse('$filesUrl?op=sign&id=${Uri.encodeQueryComponent(id)}'), headers: {'X-Auth': sb.auth.currentSession?.accessToken ?? ''});
+          return r.statusCode == 200 ? str((jsonDecode(r.body) as Map)['url']) : null;
+        } catch (_) {
+          return null;
+        }
+      });
+  static String _serverError(http.Response r) {
+    try {
+      return str((jsonDecode(utf8.decode(r.bodyBytes)) as Map)['error']);
+    } catch (_) {
+      return '${r.statusCode}';
+    }
+  }
 
   Future<void> signOut() async {
     workerTab = 0;
