@@ -317,6 +317,8 @@ class Store extends ChangeNotifier {
   Future<String?> addDeduction(Json d) => _run(() async => sb.from('deductions').insert(d));
   Future<String?> decideDeductions(List<String> ids, String status, {String note = ''}) =>
       _run(() async => sb.from('deductions').update({'status': status, 'note': note}).inFilter('id', ids));
+  Future<String?> decideAttendance(List<String> ids, String approval) =>
+      _run(() async => sb.from('attendance').update({'approval': approval}).inFilter('id', ids));
   Future<String?> deleteRow(String table, String id) => _run(() async => sb.from(table).delete().eq('id', id));
   Future<String?> decideRequest(String id, bool approve, String reply) =>
       _run(() async => sb.rpc('decide_request', params: {'p_id': id, 'p_approve': approve, 'p_reply': reply}));

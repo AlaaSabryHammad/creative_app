@@ -137,7 +137,7 @@ class _DailyScreenState extends State<DailyScreen> {
       if (!context.mounted) return;
       setState(() => _busy = false);
       if (err != null) return toast(context, err, bad: true);
-      toast(context, 'تم حفظ كشف ${fmtDate(_date)} لـ ${payload.length} عامل${otNew.isNotEmpty ? ' و${otNew.length} سجل إضافي للاعتماد' : ''}'
+      toast(context, 'تم حفظ كشف ${fmtDate(_date)} لـ ${payload.length} عامل وأُرسل للاعتماد${otNew.isNotEmpty ? ' و${otNew.length} سجل إضافي للاعتماد' : ''}'
           '${distance != null && distance > p.gpsRadius ? ' — تنبيه: على بعد ${fmtNum(distance)} م من الموقع' : ''}.');
       _load();
     }
@@ -263,6 +263,12 @@ class _DailyScreenState extends State<DailyScreen> {
             if (v != null) Pill(str(v['plate']), icon: Icons.directions_car_outlined),
           ]),
           if (other != null) Padding(padding: const EdgeInsets.only(top: 6), child: Pill('مسجّل اليوم في ${str(store.project(str(other['project_id']))?['name'])}', tone: Tone.orange)),
+          if (other == null && _saved(id) != null)
+            Padding(padding: const EdgeInsets.only(top: 6), child: switch (str(_saved(id)!['approval'])) {
+              'pending' => const Pill('بانتظار الاعتماد', tone: Tone.orange),
+              'rejected' => const Pill('مرفوض — عدّله وأعد الحفظ', tone: Tone.red),
+              _ => const Pill('معتمد', tone: Tone.green),
+            }),
           const SizedBox(height: 8),
           Wrap(spacing: 6, runSpacing: 6, children: [
             for (final s in attLabel.keys)

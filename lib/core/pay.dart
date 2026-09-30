@@ -98,7 +98,8 @@ Json payslip({required Json worker, required String month, String? from, String?
   final employed = joined.compareTo(first) > 0 ? (joined.compareTo(last) > 0 ? 0 : daysIn(joined, last)) : monthLen;
   final base = employed < monthLen || custom ? round2(daily * math.min(employed, s.monthDays)) : salary;
 
-  final att = attendance.where((a) => a['worker_id'] == id && inMonth(a['date'])).toList();
+  // Only approved days count (a saved daily sheet waits for approval).
+  final att = attendance.where((a) => a['worker_id'] == id && inMonth(a['date']) && (a['approval'] ?? 'approved') == 'approved').toList();
   int count(String st) => att.where((a) => a['status'] == st).length;
   final absent = count('absent');
   final absence = round2(absent * daily);

@@ -99,7 +99,7 @@ class RequestsScreen extends StatefulWidget {
 
 class _RequestsScreenState extends State<RequestsScreen> {
   String _tab = 'ot', _f = 'pending', _q = '';
-  List<Json>? _ded, _req;
+  List<Json>? _att, _ded, _req;
 
   @override
   void initState() {
@@ -109,23 +109,24 @@ class _RequestsScreenState extends State<RequestsScreen> {
 
   Future<void> _load() async {
     if (!store.can('requests')) return;
-    final r = await Future.wait([store.fetchAll('deductions', (q) => q.eq('status', 'pending')), store.fetchAll('requests')]);
-    if (mounted) setState(() { _ded = r[0]; _req = r[1]; });
+    final r = await Future.wait([store.fetchAll('deductions', (q) => q.eq('status', 'pending')), store.fetchAll('requests'), store.fetchAll('attendance', (q) => q.eq('approval', 'pending'))]);
+    if (mounted) setState(() { _ded = r[0]; _req = r[1]; _att = r[2]; });
   }
 
   @override
   Widget build(BuildContext context) {
     final approver = store.can('requests');
-    final nDed = _ded?.length ?? 0, nReq = _req?.where((r) => r['status'] == 'pending').length ?? 0;
+    final nAtt = _att?.length ?? 0, nDed = _ded?.length ?? 0, nReq = _req?.where((r) => r['status'] == 'pending').length ?? 0;
     final nOt = store.entries.where((e) => e['status'] == 'pending').length;
     return RefreshIndicator(
       onRefresh: () async { await store.refresh(); await _load(); },
       child: ListView(padding: const EdgeInsets.all(16), children: [
         if (approver) ...[
-          FilterChips(items: [('ot', 'الإضافي ($nOt)'), ('ded', 'الخصومات ($nDed)'), ('req', 'طلبات العمال ($nReq)')], value: _tab, onChanged: (v) => setState(() => _tab = v)),
+          FilterChips(items: [('att', 'الحضور ($nAtt)'), ('ot', 'الإضافي ($nOt)'), ('ded', 'الخصومات ($nDed)'), ('req', 'طلبات العمال ($nReq)')], value: _tab, onChanged: (v) => setState(() => _tab = v)),
           const SizedBox(height: 12),
         ],
         if (_tab == 'ot') ..._overtime(),
+        if (_tab == 'att') ..._attendance(),
         if (_tab == 'ded') ..._deductions(),
         if (_tab == 'req') ..._requests(),
       ]),
@@ -149,6 +150,62 @@ class _RequestsScreenState extends State<RequestsScreen> {
       const SizedBox(height: 12),
       if (list.isEmpty) const CardBox(child: EmptyState('لا توجد سجلات')),
       for (final e in list) EntryCard(e),
+    ];
+  }
+
+  Future<void> _decideAtt(List<String> ids, String approval) async {
+    final err = await store.decideAttendance(ids, approval);
+    if (!mounted) return;
+    toast(context, err ?? (approval == 'approved' ? 'تم اعتماد ${ids.length} يوم.' : 'تم رفض ${ids.length} يوم.'), bad: err != null);
+    _load();
+  }
+
+  /// Saved daily-sheet days waiting for approval, one card per sheet (date + site); payroll counts approved days only.
+  List<Widget> _attendance() {
+    if (_att == null) return const [Center(child: Padding(padding: EdgeInsets.all(30), child: CircularProgressIndicator()))];
+    const label = {'present': ('حاضر', Tone.green), 'absent': ('غائب', Tone.red), 'leave': ('إجازة', Tone.blue), 'sick': ('مرضية', Tone.orange), 'off': ('راحة', Tone.slate)};
+    final sheets = <String, List<Json>>{};
+    for (final a in _att!) { sheets.putIfAbsent('${a['date']}|${a['project_id']}', () => []).add(a); }
+    final keys = sheets.keys.toList()..sort((a, b) => b.compareTo(a));
+    return [
+      const Text('الحضور والوجبات لا تُحسب في الراتب إلا بعد اعتمادها. أي تعديل على يوم معتمد يعيده للاعتماد.', style: TextStyle(fontSize: 12, color: C.fg3)),
+      const SizedBox(height: 10),
+      if (keys.isEmpty) const CardBox(child: EmptyState('لا توجد كشوف حضور بانتظار الاعتماد')),
+      for (final k in keys)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: CardBox(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Row(children: [
+                const Icon(Icons.fact_check_outlined, color: C.primary),
+                const SizedBox(width: 8),
+                Expanded(child: Text('${fmtDate(k.split('|')[0])} · ${str(store.project(k.split('|')[1])?['name'])}', style: const TextStyle(fontWeight: FontWeight.w800))),
+                Pill('${sheets[k]!.length} عامل'),
+              ]),
+              const Divider(height: 18),
+              for (final a in sheets[k]!..sort((x, y) => str(x['worker_id']).compareTo(str(y['worker_id']))))
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(children: [
+                    WorkerPhoto(store.worker(str(a['worker_id']))?['photo'], size: 32),
+                    const SizedBox(width: 8),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(str(store.worker(str(a['worker_id']))?['name'] ?? a['worker_id']), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700)),
+                      Text([if (a['breakfast'] == true) 'فطار', if (a['lunch'] == true) 'غداء', if (str(a['note']).isNotEmpty) str(a['note'])].join(' · '), style: const TextStyle(fontSize: 12, color: C.fg3)),
+                    ])),
+                    Pill(label[a['status']]?.$1 ?? str(a['status']), tone: label[a['status']]?.$2 ?? Tone.slate),
+                    IconButton(tooltip: 'رفض', visualDensity: VisualDensity.compact, onPressed: () => _decideAtt([str(a['id'])], 'rejected'), icon: const Icon(Icons.close, color: C.danger)),
+                  ]),
+                ),
+              const SizedBox(height: 8),
+              Row(children: [
+                Expanded(child: OutlinedButton(style: OutlinedButton.styleFrom(foregroundColor: C.danger), onPressed: () => _decideAtt([for (final a in sheets[k]!) str(a['id'])], 'rejected'), child: const Text('رفض الكشف'))),
+                const SizedBox(width: 10),
+                Expanded(child: FilledButton(style: FilledButton.styleFrom(backgroundColor: C.success), onPressed: () => _decideAtt([for (final a in sheets[k]!) str(a['id'])], 'approved'), child: Text('اعتماد (${sheets[k]!.length})'))),
+              ]),
+            ]),
+          ),
+        ),
     ];
   }
 

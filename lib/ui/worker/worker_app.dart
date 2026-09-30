@@ -135,7 +135,7 @@ class _Home extends StatelessWidget {
     final w = store.myWorker, p = store.pay, month = periodMonth(todayIso(), p.startDay);
     final slip = payslip(worker: w, month: month, attendance: store.myAtt, overtime: store.myOt, deductions: store.myDed, advances: store.myAdv, paidOtIds: _paidOt, s: p);
     final days = Map<String, dynamic>.from(slip['days'] as Map), ot = slip['overtime'] as Map, meals = slip['meals'] as Map;
-    final leave = leaveBalance(w, [for (final a in store.myAtt) if (a['status'] == 'leave') str(a['date'])], p, todayIso());
+    final leave = leaveBalance(w, [for (final a in store.myAtt) if (a['status'] == 'leave' && (a['approval'] ?? 'approved') == 'approved') str(a['date'])], p, todayIso());
     final iq = str(w['iqamaExpiry']).isEmpty ? null : daysLeft(str(w['iqamaExpiry']));
     final award = gratuity(w, todayIso());
     final project = store.mine['project'] as Map?, vehicle = store.mine['vehicle'] as Map?;

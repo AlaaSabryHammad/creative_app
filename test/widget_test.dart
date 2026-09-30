@@ -88,4 +88,13 @@ void main() {
     expect(slip({'id': 'W1', 'salary': 3000}, from: '2026-10-01', to: '2026-10-15')['base'], 1500);
     expect(slip({'id': 'W1', 'salary': 3000, 'joined': '2026-10-16'})['base'], 1000);
   });
+
+  test('payroll counts approved attendance days only', () {
+    final p = payslip(worker: {'id': 'W1', 'salary': 3000}, month: '2026-09', attendance: [
+      {'worker_id': 'W1', 'date': '2026-09-01', 'status': 'present', 'breakfast': true, 'breakfast_price': 5, 'approval': 'approved'},
+      {'worker_id': 'W1', 'date': '2026-09-02', 'status': 'present', 'breakfast': true, 'breakfast_price': 5, 'approval': 'rejected'},
+      {'worker_id': 'W1', 'date': '2026-09-03', 'status': 'absent', 'approval': 'pending'},
+    ], overtime: const [], deductions: const [], advances: const [], s: const PaySettings());
+    expect(((p['days'] as Map)['present'], (p['days'] as Map)['absent'], (p['meals'] as Map)['amount']), (1, 0, 5));
+  });
 }

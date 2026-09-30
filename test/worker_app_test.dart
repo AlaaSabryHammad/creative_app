@@ -38,7 +38,7 @@ void main() {
       for (final (i, k, d) in [
         (1, 'ot_new', {'date': t, 'hours': 2, 'status': 'pending'}), (2, 'ot_approved', {'date': t, 'hours': 2}), (3, 'ot_rejected', {'date': t, 'hours': 2, 'note': 'لا يوجد تكليف'}),
         (4, 'ot_changed', {'date': t, 'hours': 3}), (5, 'ot_deleted', {'date': t, 'hours': 3}), (6, 'att', {'date': t, 'status': 'present', 'breakfast': true, 'lunch': true}),
-        (7, 'att_deleted', {'date': t}), (8, 'ded', {'date': t, 'amount': 50, 'reason': 'تأخير'}), (9, 'ded_cancelled', {'date': t, 'amount': 50}),
+        (7, 'att_deleted', {'date': t}), (20, 'att_rejected', {'date': t}), (8, 'ded', {'date': t, 'amount': 50, 'reason': 'تأخير'}), (9, 'ded_cancelled', {'date': t, 'amount': 50}),
         (10, 'adv', {'amount': 600, 'installment': 300, 'month': m}), (11, 'adv_cancelled', {'amount': 600}), (12, 'req_approved', {'kind': 'leave', 'reply': 'ok'}),
         (13, 'req_rejected', {'kind': 'advance', 'reply': ''}), (14, 'slip', {'month': m, 'net': 2455}), (15, 'slip_paid', {'month': m, 'net': 2455}),
         (16, 'slip_withdrawn', {'month': m}), (17, 'data', {'fields': ['salary', 'rate', 'iban']}), (18, 'vehicle', {'plate': 'أ ب ج 1234'}), (19, 'vehicle_removed', {'plate': 'أ ب ج 1234'}),
