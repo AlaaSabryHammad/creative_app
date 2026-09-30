@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/i18n.dart' show defaultLang, tr;
 import '../core/logic.dart';
 import '../core/pay.dart';
+import 'llm.dart';
 import 'notices.dart';
 
 const sbUrl = 'https://sxkmcctluvomwapwomwz.supabase.co';
@@ -120,7 +121,7 @@ class Store extends ChangeNotifier {
   Json get lookups => obj('lookups');
   Json get settings => obj('settings');
   Json get company => obj('company');
-  String get aiKey => text('ai');
+  AiConfig get ai => aiConfig(_data['ai']);
   int get alertDays => toNum(company['alertDays']).toInt() > 0 ? toNum(company['alertDays']).toInt() : 30;
 
   Json? worker(String? id) => allWorkers.cast<Json?>().firstWhere((w) => w!['id'] == id, orElse: () => null);

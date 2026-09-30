@@ -1,3 +1,4 @@
+import 'package:creative_app/data/llm.dart';
 import 'package:creative_app/data/store.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
@@ -96,5 +97,18 @@ void main() {
       {'worker_id': 'W1', 'date': '2026-09-03', 'status': 'absent', 'approval': 'pending'},
     ], overtime: const [], deductions: const [], advances: const [], s: const PaySettings());
     expect(((p['days'] as Map)['present'], (p['days'] as Map)['absent'], (p['meals'] as Map)['amount']), (1, 0, 5));
+  });
+
+  test('AI config: old Claude key, chosen models, fallback to the first enabled model', () {
+    final old = aiConfig('k1');
+    expect((old.assistant?.provider, old.assistant?.model, old.key('anthropic')), ('anthropic', 'claude-opus-5', 'k1'));
+    final c = aiConfig({
+      'providers': {'gemini': {'key': 'g', 'models': ['gm-1', 'gm-2']}, 'deepseek': {'key': 'd', 'models': ['ds-1']}, 'openai': {'key': '', 'models': ['x']}},
+      'assistant': {'provider': 'deepseek', 'model': 'ds-1'},
+      'documents': {'provider': 'openai', 'model': 'x'},  // no key → falls back
+    });
+    expect((c.assistant?.provider, c.assistant?.model), ('deepseek', 'ds-1'));
+    expect((c.documents?.provider, c.documents?.model), ('gemini', 'gm-1'));
+    expect(aiConfig(null).assistant, isNull);
   });
 }

@@ -1,9 +1,8 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'llm.dart';
 import '../core/logic.dart';
 import 'store.dart';
 
-// Claude has no official Dart SDK, so the Messages API is called over HTTPS directly.
 const _assist = '''أنت "مساعد CREATIVE" الذكي لنظام إدارة منشأة مقاولات سعودية: العمالة والعمل الإضافي، المشاريع، وثائق المنشأة، والسيارات والمعدات.
 - أجب بالعربية بدقة وإيجاز اعتمادًا على البيانات المرفقة فقط، وإذا لم تتوفر المعلومة فقل ذلك صراحة.
 - احسب الأرقام بعناية. المبالغ بالريال السعودي، ومبلغ العمل الإضافي = الساعات × أجر الساعة للعامل بدون أي زيادات.
@@ -34,36 +33,12 @@ Json _snapshot(Store s) {
   };
 }
 
-/// Sends the chat history (user/assistant turns) and returns the assistant's reply text.
+/// Sends the chat history (user/assistant turns) to the assistant model and returns its reply text.
 Future<String> askAssistant(List<Json> history) async {
-  final key = store.aiKey;
-  if (key.isEmpty) throw 'لم يُضف مفتاح Claude API بعد. يضيفه مدير النظام من الإعدادات في الموقع.';
   var recent = history.length > 20 ? history.sublist(history.length - 20) : history;
   while (recent.isNotEmpty && recent.first['role'] != 'user') { recent = recent.sublist(1); }
-  final http.Response r;
-  try {
-    r = await http.post(
-      Uri.parse('https://api.anthropic.com/v1/messages'),
-      headers: {'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-beta': 'server-side-fallback-2026-07-01', 'content-type': 'application/json'},
-      body: jsonEncode({
-        'model': 'claude-opus-5',
-        'max_tokens': 16000,
-        'fallbacks': 'default',
-        'system': [
-          {'type': 'text', 'text': _assist},
-          {'type': 'text', 'text': 'بيانات المنشأة الحالية (JSON):\n${jsonEncode(_snapshot(store))}', 'cache_control': {'type': 'ephemeral'}},
-        ],
-        'messages': recent,
-      }),
-    ).timeout(const Duration(minutes: 10));
-  } catch (_) {
-    throw 'تعذّر الاتصال بخدمة الذكاء الاصطناعي. تحقق من الإنترنت.';
-  }
-  final body = jsonDecode(utf8.decode(r.bodyBytes)) as Json;
-  if (r.statusCode == 401) throw 'مفتاح Claude API غير صحيح.';
-  if (r.statusCode == 429) throw 'تم تجاوز حد الطلبات، حاول بعد قليل.';
-  if (r.statusCode >= 400) throw 'خطأ من خدمة الذكاء الاصطناعي: ${body['error']?['message'] ?? r.statusCode}';
-  if (body['stop_reason'] == 'refusal') throw 'رفض النموذج معالجة هذا الطلب.';
-  final text = ((body['content'] as List?) ?? []).where((b) => b['type'] == 'text').map((b) => b['text']).join();
+  final cfg = store.ai;
+  final text = await aiComplete(cfg, cfg.assistant, what: 'المساعد الذكي', messages: recent,
+      system: '$_assist\n\nبيانات المنشأة الحالية (JSON):\n${jsonEncode(_snapshot(store))}');
   return text.replaceAll('**', '').replaceAll(RegExp(r'^#+\s*', multiLine: true), '');
 }
