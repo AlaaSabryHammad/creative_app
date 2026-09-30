@@ -128,4 +128,11 @@ void main() {
     expect(html, contains('26-09-2026 - 25-10-2026'));
     expect(html, contains('<td>4199.23</td>'));                    // total net
   });
+
+  test('print font is bundled: 4 faces (Arabic + Latin, regular + bold)', () async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    final css = await printFontCss();
+    expect('@font-face'.allMatches(css).length, 4);
+    expect(css, contains('data:font/woff2;base64,'));
+  });
 }
