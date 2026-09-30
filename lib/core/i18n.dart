@@ -25,6 +25,7 @@ String tr(String key, [Object? n]) {
 
 const _t = <String, Map<String, String>>{
   'ar': {
+    'instDeduction': 'قسط خصم', 'nInst': 'خصم {amount} ر.س على دفعات — {installment} ر.س شهريًا من {month}: {reason}',
     'myVehicle': 'سيارتي', 'regExpiry': 'الاستمارة', 'insExpiry': 'التأمين', 'inspExpiry': 'الفحص الدوري',
     'nAttRejected': 'رُفض سجل حضورك بتاريخ {date} — سيُراجعه المشرف',
     'myDocs': 'مستنداتي', 'noDocs': 'لا توجد مستندات بعد', 'expired': 'منتهية', 'expiresIn': 'تنتهي خلال {n} يوم', 'validUntil': 'سارية حتى {n}',
@@ -62,6 +63,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'تم تحديث بياناتك: {fields}', 'nVehicle': 'خُصصت لك السيارة {plate}', 'nVehicleRemoved': 'لم تعد السيارة {plate} مخصصة لك',
   },
   'en': {
+    'instDeduction': 'Deduction installment', 'nInst': 'Deduction of {amount} SAR in installments — {installment} SAR a month from {month}: {reason}',
     'myVehicle': 'My vehicle', 'regExpiry': 'Registration', 'insExpiry': 'Insurance', 'inspExpiry': 'Inspection',
     'nAttRejected': 'Your attendance on {date} was rejected — your supervisor will review it',
     'myDocs': 'My documents', 'noDocs': 'No documents yet', 'expired': 'Expired', 'expiresIn': 'Expires in {n} days', 'validUntil': 'Valid until {n}',
@@ -99,6 +101,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'Your details were updated: {fields}', 'nVehicle': 'Vehicle assigned to you: {plate}', 'nVehicleRemoved': 'Vehicle {plate} is no longer assigned to you',
   },
   'ur': {
+    'instDeduction': 'کٹوتی کی قسط', 'nInst': '{amount} ریال کی کٹوتی اقساط میں — {month} سے ماہانہ {installment} ریال: {reason}',
     'myVehicle': 'میری گاڑی', 'regExpiry': 'رجسٹریشن', 'insExpiry': 'انشورنس', 'inspExpiry': 'معائنہ',
     'nAttRejected': '{date} کی حاضری مسترد — سپروائزر اس کا جائزہ لے گا',
     'myDocs': 'میری دستاویزات', 'noDocs': 'ابھی کوئی دستاویز نہیں', 'expired': 'میعاد ختم', 'expiresIn': '{n} دن میں ختم', 'validUntil': '{n} تک کارآمد',
@@ -136,6 +139,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'آپ کی معلومات اپ ڈیٹ ہوئیں: {fields}', 'nVehicle': 'آپ کو گاڑی دی گئی: {plate}', 'nVehicleRemoved': 'گاڑی {plate} اب آپ کے پاس نہیں',
   },
   'hi': {
+    'instDeduction': 'कटौती की किस्त', 'nInst': '{amount} रियाल की कटौती किस्तों में — {month} से हर महीने {installment} रियाल: {reason}',
     'myVehicle': 'मेरी गाड़ी', 'regExpiry': 'पंजीकरण', 'insExpiry': 'बीमा', 'inspExpiry': 'निरीक्षण',
     'nAttRejected': '{date} की हाज़िरी अस्वीकृत — सुपरवाइज़र इसकी समीक्षा करेगा',
     'myDocs': 'मेरे दस्तावेज़', 'noDocs': 'अभी कोई दस्तावेज़ नहीं', 'expired': 'समाप्त', 'expiresIn': '{n} दिन में समाप्त', 'validUntil': '{n} तक मान्य',
@@ -173,6 +177,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'आपकी जानकारी अपडेट हुई: {fields}', 'nVehicle': 'आपको गाड़ी दी गई: {plate}', 'nVehicleRemoved': 'गाड़ी {plate} अब आपको नहीं दी गई है',
   },
   'bn': {
+    'instDeduction': 'কর্তনের কিস্তি', 'nInst': '{amount} রিয়াল কর্তন কিস্তিতে — {month} থেকে মাসে {installment} রিয়াল: {reason}',
     'myVehicle': 'আমার গাড়ি', 'regExpiry': 'নিবন্ধন', 'insExpiry': 'বীমা', 'inspExpiry': 'পরিদর্শন',
     'nAttRejected': '{date} তারিখের হাজিরা বাতিল — সুপারভাইজার এটি দেখবেন',
     'myDocs': 'আমার কাগজপত্র', 'noDocs': 'এখনও কোনো কাগজপত্র নেই', 'expired': 'মেয়াদোত্তীর্ণ', 'expiresIn': '{n} দিনে মেয়াদ শেষ', 'validUntil': '{n} পর্যন্ত বৈধ',
@@ -210,6 +215,7 @@ const _t = <String, Map<String, String>>{
     'nData': 'আপনার তথ্য হালনাগাদ হয়েছে: {fields}', 'nVehicle': 'আপনাকে গাড়ি দেওয়া হয়েছে: {plate}', 'nVehicleRemoved': 'গাড়ি {plate} আর আপনার নামে নেই',
   },
   'ne': {
+    'instDeduction': 'कटौतीको किस्ता', 'nInst': '{amount} रियाल कटौती किस्तामा — {month} देखि मासिक {installment} रियाल: {reason}',
     'myVehicle': 'मेरो गाडी', 'regExpiry': 'दर्ता', 'insExpiry': 'बीमा', 'inspExpiry': 'निरीक्षण',
     'nAttRejected': '{date} को हाजिरी अस्वीकृत — सुपरभाइजरले हेर्नुहुनेछ',
     'myDocs': 'मेरा कागजातहरू', 'noDocs': 'अहिले कुनै कागजात छैन', 'expired': 'म्याद सकियो', 'expiresIn': '{n} दिनमा म्याद सकिन्छ', 'validUntil': '{n} सम्म मान्य',
@@ -283,7 +289,9 @@ const _fieldKeys = {'name': 'name', 'trade': 'trade', 'salary': 'salary', 'rate'
     'att_rejected' => (tr('attendance'), _fill('nAttRejected', {'date': _day(d['date'])})),
     'ded' => (tr('deductions'), _fill('nDed', {'amount': numv('amount'), 'date': _day(d['date']), 'reason': str(d['reason'])})),
     'ded_cancelled' => (tr('deductions'), _fill('nDedCancelled', {'amount': numv('amount'), 'date': _day(d['date'])})),
-    'adv' => (tr('advances'), _fill('nAdv', {'amount': numv('amount'), 'installment': numv('installment'), 'month': _month(d['month'])})),
+    'adv' => d['kind'] == 'deduction'
+        ? (tr('deductions'), _fill('nInst', {'amount': numv('amount'), 'installment': numv('installment'), 'month': _month(d['month']), 'reason': str(d['reason'])}))
+        : (tr('advances'), _fill('nAdv', {'amount': numv('amount'), 'installment': numv('installment'), 'month': _month(d['month'])})),
     'adv_cancelled' => (tr('advances'), _fill('nAdvCancelled', {'amount': numv('amount')})),
     'req_approved' => (tr('requests'), _fill('nReqApproved', {'kind': tr(kindKey)}) + extra('reply')),
     'req_rejected' => (tr('requests'), _fill('nReqRejected', {'kind': tr(kindKey)}) + extra('reply')),

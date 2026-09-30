@@ -172,7 +172,8 @@ class SlipDetails extends StatelessWidget {
           const Divider(height: 20),
           line('${t('absence', 'خصم الغياب')} (${days['absent']})', toNum(p['absence']), neg: true),
           for (final d in (p['deductions'] as List? ?? const [])) line('${d['reason']} — ${d['date']}', toNum(d['amount']), neg: true),
-          if (toNum(p['advancesTotal']) > 0) line(t('advance', 'قسط سلفة'), toNum(p['advancesTotal']), neg: true),
+          for (final a in (p['advances'] as List? ?? const []))
+            line(a['kind'] == 'deduction' ? '${t('instDeduction', 'قسط خصم')}${str(a['reason']).isEmpty ? '' : ' — ${a['reason']}'}' : t('advance', 'قسط سلفة'), toNum(a['amount']), neg: true),
           line(t('totalDeductions', 'إجمالي الخصومات'), toNum(p['totalDeductions']), neg: true, strong: true),
           const SizedBox(height: 12),
           Container(

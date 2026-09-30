@@ -116,7 +116,7 @@ Json payslip({required Json worker, required String month, String? from, String?
   final dedTotal = round2(ded.fold<double>(0, (a, d) => a + toNum(d['amount'])));
   final adv = [
     for (final a in advances.where((a) => a['worker_id'] == id && a['status'] == 'active' && str(a['start_month']).compareTo(month) <= 0))
-      {'id': a['id'], 'amount': round2(math.min(toNum(a['installment']), toNum(a['amount']) - toNum(a['repaid'])))},
+      {'id': a['id'], 'amount': round2(math.min(toNum(a['installment']), toNum(a['amount']) - toNum(a['repaid']))), 'kind': a['kind'] ?? 'advance', 'reason': a['reason'] ?? ''},
   ].where((a) => toNum(a['amount']) > 0).toList();
   final advTotal = round2(adv.fold<double>(0, (a, x) => a + toNum(x['amount'])));
 
@@ -142,6 +142,10 @@ Json payslip({required Json worker, required String month, String? from, String?
     'capExceeded': totalDeductions > gross * s.deductionCap / 100,
   };
 }
+
+/// Monthly installment for an amount split into [n] payments, rounded up to the halala so n payments cover it
+/// (web: otInstallment).
+double installmentOf(num amount, int n) => (amount / math.max(1, n) * 100 - 1e-9).ceil() / 100;
 
 /// Annual leave balance in days (see pay.js otLeaveBalance).
 double leaveBalance(Json w, List<String> leaveDays, PaySettings s, String today) {

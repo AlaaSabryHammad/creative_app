@@ -57,7 +57,7 @@ void main() {
     expect([p['overtime']['hours'], p['overtime']['amount'], p['overtime']['paidSeparately']], [10, 187.5, 37.5]);
     expect(p['otIds'], ['OT-1', 'OT-2']);
     expect(p['deductionsTotal'], 62.5);
-    expect(p['advances'], [{'id': 'a1', 'amount': 300}, {'id': 'a2', 'amount': 100}]);
+    expect(p['advances'], [{'id': 'a1', 'amount': 300, 'kind': 'advance', 'reason': ''}, {'id': 'a2', 'amount': 100, 'kind': 'advance', 'reason': ''}]);
     expect([p['gross'], p['totalDeductions'], p['net']], [3517.5, 662.5, 2855]);
     expect(p['capExceeded'], false);
 

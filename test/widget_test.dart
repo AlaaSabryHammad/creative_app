@@ -135,4 +135,14 @@ void main() {
     expect('@font-face'.allMatches(css).length, 4);
     expect(css, contains('data:font/woff2;base64,'));
   });
+
+  test('installments: n payments cover the amount, the last takes the rest', () {
+    expect(installmentOf(1000, 3), 333.34);
+    expect(installmentOf(900, 3), 300);
+    expect(installmentOf(1234.5, 4), 308.63);
+    final p = payslip(worker: {'id': 'W1', 'salary': 3000}, month: '2026-10', attendance: const [], overtime: const [], deductions: const [],
+        advances: [{'id': 'a', 'worker_id': 'W1', 'status': 'active', 'start_month': '2026-10', 'amount': 1000, 'installment': 333.34, 'repaid': 666.68, 'kind': 'deduction', 'reason': 'x'}],
+        s: const PaySettings());
+    expect(((p['advances'] as List).first['amount'], (p['advances'] as List).first['kind']), (333.32, 'deduction'));
+  });
 }

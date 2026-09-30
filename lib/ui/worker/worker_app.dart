@@ -376,6 +376,8 @@ class _PayState extends State<_Pay> {
             padding: const EdgeInsets.only(bottom: 8),
             child: CardBox(
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                if (a['kind'] == 'deduction')
+                  Padding(padding: const EdgeInsets.only(bottom: 6), child: Text('${tr('instDeduction')}${str(a['reason']).isEmpty ? '' : ' — ${a['reason']}'}', style: const TextStyle(fontWeight: FontWeight.w700, color: C.danger))),
                 Row(children: [
                   Expanded(child: Text(sar(toNum(a['amount'])), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800))),
                   Text('${tr('remaining')}: ${sar(toNum(a['amount']) - toNum(a['repaid']))}', style: const TextStyle(fontWeight: FontWeight.w700)),

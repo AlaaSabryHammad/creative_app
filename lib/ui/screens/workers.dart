@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../core/logic.dart';
+import '../../core/pay.dart';
 import '../../core/theme.dart';
 import '../../data/store.dart';
 import '../widgets.dart';
@@ -131,6 +133,7 @@ class _WorkersScreenState extends State<WorkersScreen> {
               Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Row(children: [SizedBox(width: 120, child: Text(l, style: const TextStyle(color: C.fg3, fontSize: 13))), ExpiryChip(str(car[k]), days: 30)])),
             for (final f in (car['files'] as List?) ?? const []) FileTile(Map<String, dynamic>.from(f as Map)),
           ],
+          if (store.can('payroll')) _Installments(str(w['id'])),
           SectionTitle('المستندات (${files.length})'),
           if (files.isEmpty) const Text('لا توجد مستندات — صوّر الإقامة أو الرخصة أو الجواز.', style: TextStyle(color: C.fg3, fontSize: 13)),
           for (final f in files) FileTile(f),
@@ -165,6 +168,117 @@ class TradesScreen extends StatelessWidget {
                 Text('${store.workers.where((w) => w['trade'] == t['name']).length} عامل', style: const TextStyle(fontSize: 12, color: C.fg3)),
               ])),
               Text(toNum(t['rate']) > 0 ? '${fmtNum(toNum(t['rate']))} ر.س/س' : '—', style: const TextStyle(fontWeight: FontWeight.w800)),
+            ]),
+          ),
+        ),
+    ]);
+  }
+}
+
+String fmtMonth(String ym) => DateFormat('MMMM y', 'ar').format(DateTime.parse('$ym-01'));
+
+/// A worker's installment deductions and advances (web: OTWorkerInstallments) and adding a deduction split into
+/// monthly installments, taken from each payroll until repaid.
+class _Installments extends StatefulWidget {
+  final String workerId;
+  const _Installments(this.workerId);
+  @override
+  State<_Installments> createState() => _InstallmentsState();
+}
+
+class _InstallmentsState extends State<_Installments> {
+  List<Json>? _rows;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final r = await store.fetchAll('advances', (q) => q.eq('worker_id', widget.workerId));
+    if (mounted) setState(() => _rows = r..sort((a, b) => str(b['date']).compareTo(str(a['date']))));
+  }
+
+  Future<void> _add() async {
+    final reason = TextEditingController(), amount = TextEditingController(), count = TextEditingController(text: '3');
+    var start = periodMonth(todayIso(), store.pay.startDay);
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Colors.white,
+      builder: (c) => StatefulBuilder(builder: (c, set) {
+        final a = toNum(amount.text), n = (int.tryParse(count.text) ?? 1).clamp(1, 60);
+        final inst = installmentOf(a, n);
+        final last = round2(a - inst * (n - 1));
+        return Padding(
+          padding: EdgeInsets.fromLTRB(20, 0, 20, 20 + MediaQuery.of(c).viewInsets.bottom),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            const Text('خصم بالتقسيط', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 12),
+            TextField(controller: reason, decoration: const InputDecoration(labelText: 'سبب الخصم', hintText: 'مثال: تلف معدات، مخالفة مرورية…'), onChanged: (_) => set(() {})),
+            const SizedBox(height: 10),
+            Row(children: [
+              Expanded(child: TextField(controller: amount, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'القيمة الإجمالية', suffixText: 'ر.س'), onChanged: (_) => set(() {}))),
+              const SizedBox(width: 10),
+              Expanded(child: TextField(controller: count, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'عدد الدفعات'), onChanged: (_) => set(() {}))),
+            ]),
+            const SizedBox(height: 10),
+            Row(children: [
+              const Text('أول دفعة في مسيّر', style: TextStyle(color: C.fg3)),
+              const Spacer(),
+              IconButton(onPressed: () => set(() => start = addMonths(start, -1)), icon: const Icon(Icons.chevron_left)),
+              Text(fmtMonth(start), style: const TextStyle(fontWeight: FontWeight.w800)),
+              IconButton(onPressed: () => set(() => start = addMonths(start, 1)), icon: const Icon(Icons.chevron_right)),
+            ]),
+            if (a > 0)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: C.success50, borderRadius: BorderRadius.circular(12)),
+                child: Text('${n > 1 && last != inst ? '${n - 1} دفعات × ${fmtNum(inst)} ر.س والأخيرة ${fmtNum(last)} ر.س' : '$n دفعة × ${fmtNum(inst)} ر.س'} — تُخصم تلقائيًا من كل راتب حتى السداد، ابتداءً من ${fmtMonth(start)}.',
+                    style: const TextStyle(color: C.success800, fontWeight: FontWeight.w600)),
+              ),
+            const SizedBox(height: 14),
+            FilledButton(onPressed: a > 0 && reason.text.trim().isNotEmpty ? () => Navigator.pop(c, true) : null, child: const Text('حفظ الخصم')),
+          ]),
+        );
+      }),
+    );
+    if (ok != true) return;
+    final a = toNum(amount.text), n = (int.tryParse(count.text) ?? 1).clamp(1, 60);
+    final err = await store.addAdvance({'worker_id': widget.workerId, 'kind': 'deduction', 'reason': reason.text.trim(), 'amount': a,
+        'installment': installmentOf(a, n), 'start_month': start, 'date': todayIso()});
+    if (!mounted) return;
+    toast(context, err ?? 'تم تسجيل الخصم على $n دفعة.', bad: err != null);
+    _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = _rows;
+    double left(Json a) => round2(toNum(a['amount']) - toNum(a['repaid']));
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      SectionTitle('الخصومات بالتقسيط والسلف', trailing: TextButton.icon(onPressed: _add, icon: const Icon(Icons.add), label: const Text('خصم بالتقسيط'))),
+      if (rows == null) const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator())),
+      if (rows != null && rows.isEmpty) const Text('لا توجد خصومات مقسّطة أو سلف.', style: TextStyle(color: C.fg3, fontSize: 13)),
+      for (final a in rows ?? const <Json>[])
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: CardBox(
+            padding: const EdgeInsets.all(12),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Row(children: [
+                Pill(a['kind'] == 'deduction' ? 'خصم بالتقسيط' : 'سلفة', tone: a['kind'] == 'deduction' ? Tone.red : Tone.blue),
+                const SizedBox(width: 8),
+                Expanded(child: Text(str(a['reason']).isEmpty ? fmtDate(str(a['date'])) : str(a['reason']), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700))),
+                Pill(a['status'] == 'cancelled' ? 'موقوف' : left(a) > 0 ? 'متبقٍ ${fmtNum(left(a))}' : 'مسدَّد', tone: a['status'] == 'cancelled' ? Tone.slate : left(a) > 0 ? Tone.orange : Tone.green),
+              ]),
+              const SizedBox(height: 8),
+              ProgressBar(toNum(a['amount']) > 0 ? toNum(a['repaid']) / toNum(a['amount']) * 100 : 0),
+              const SizedBox(height: 4),
+              Text('${fmtNum(toNum(a['amount']))} ر.س · دفعة ${fmtNum(toNum(a['installment']))} ر.س من ${fmtMonth(str(a['start_month']))} · المسدَّد ${fmtNum(toNum(a['repaid']))}',
+                  style: const TextStyle(fontSize: 12, color: C.fg3)),
             ]),
           ),
         ),
