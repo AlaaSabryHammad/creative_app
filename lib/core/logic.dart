@@ -144,49 +144,6 @@ List<String> vehicleIssues(Json v) {
   return out;
 }
 
-// ---------- Overtime payouts (same rules as the web: src/payments.jsx) ----------
-
-const payMethods = {'cash': 'نقدًا', 'transfer': 'تحويل بنكي', 'cheque': 'شيك'};
-
-/// Entry ids covered by any payout — an entry is paid when its id is in some payout's entryIds.
-Set<String> paidSet(List<Map> payments) => {for (final p in payments) for (final id in (p['entryIds'] as List? ?? const [])) '$id'};
-
-class Balance {
-  final String workerId;
-  double hours = 0, amount = 0, paidH = 0, paid = 0;
-  final Map<String, double> byDay = {'normal': 0, 'friday': 0, 'holiday': 0};
-  Balance(this.workerId);
-  double get remH => hours - paidH;
-  double get rem => amount - paid;
-}
-
-/// Single source for payroll + payout balances: approved overtime in [from, to] per worker,
-/// split into paid and remaining.
-List<Balance> balances(List<Map> entries, List<Map> workers, Set<String> paid, {String from = '', String to = '', String proj = 'all'}) {
-  final out = <String, Balance>{};
-  for (final e in entries) {
-    final d = str(e['date']);
-    if (e['status'] != 'approved' || (from.isNotEmpty && d.compareTo(from) < 0) || (to.isNotEmpty && d.compareTo(to) > 0) || (proj != 'all' && e['projectId'] != proj)) continue;
-    final r = out.putIfAbsent(str(e['workerId']), () => Balance(str(e['workerId'])));
-    final h = toNum(e['hours']);
-    final a = otAmount(Map<String, dynamic>.from(e), workers);
-    r.hours += h;
-    r.amount += a;
-    r.byDay[str(e['dayType'])] = (r.byDay[str(e['dayType'])] ?? 0) + h;
-    if (paid.contains(str(e['id']))) {
-      r.paidH += h;
-      r.paid += a;
-    }
-  }
-  return out.values.toList();
-}
-
-(String, String) monthRange(String ym) => ('$ym-01', '$ym-31');
-String prevMonth() {
-  final n = DateTime.now();
-  return DateFormat('yyyy-MM').format(DateTime(n.year, n.month - 1, 1));
-}
-
 // ---------- Payment claims — المستخلصات (same rules as the web: src/claims.jsx) ----------
 
 const claimStatus = {'submitted': 'مقدَّم', 'approved': 'معتمد', 'paid': 'مصروف'};

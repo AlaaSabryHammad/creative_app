@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:url_launcher/url_launcher.dart';
 import '../core/logic.dart';
 import '../core/theme.dart';
@@ -306,5 +307,21 @@ class AiNote extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(child: Text(text, style: const TextStyle(fontSize: 13, color: C.fg2, height: 1.5))),
         ]),
+      );
+}
+
+/// Date input that opens the platform date picker.
+class DateField extends StatelessWidget {
+  final String label, value;
+  final ValueChanged<String> onChanged;
+  final bool future;  // allow dates years ahead (document expiry dates)
+  const DateField(this.label, this.value, this.onChanged, {super.key, this.future = false});
+  @override
+  Widget build(BuildContext context) => InkWell(
+        onTap: () async {
+          final d = await showDatePicker(context: context, initialDate: parseDate(value) ?? DateTime.now(), firstDate: DateTime(2015), lastDate: DateTime.now().add(Duration(days: future ? 365 * 15 : 365)));
+          if (d != null) onChanged(DateFormat('yyyy-MM-dd').format(d));
+        },
+        child: InputDecorator(decoration: InputDecoration(labelText: label, prefixIcon: const Icon(Icons.event, size: 20)), child: Text(fmtDate(value))),
       );
 }

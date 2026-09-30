@@ -29,7 +29,6 @@ Json _snapshot(Store s) {
       'columns': ['id', 'date', 'workerId', 'projectId', 'hours', 'amount', 'status', 'paid', 'reason'],
       'rows': s.entries.map((e) => [e['id'], e['date'], e['workerId'], e['projectId'], e['hours'], otAmount(e, s.workers).round(), e['status'], paid.contains(e['id']), e['reason']]).toList(),
     },
-    'overtimePayouts': s.payments.map((p) => {'id': p['id'], 'from': p['from'], 'to': p['to'], 'paidOn': p['date'], 'method': p['method'], 'total': p['total'], 'items': p['items']}).toList(),
     'documents': s.docs.map((d) => {...d, 'files': ((d['files'] as List?) ?? []).map((f) => f['name']).toList()}).toList(),
     'vehicles': s.vehicles.map((v) => {...v, 'files': ((v['files'] as List?) ?? []).map((f) => f['name']).toList()}).toList(),
   };

@@ -6,7 +6,6 @@ import '../../data/extract.dart';
 import '../../data/store.dart';
 import '../doc_pick.dart';
 import '../widgets.dart';
-import 'payments.dart' show DateField;
 
 bool _isDate(String v) => RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(v);
 

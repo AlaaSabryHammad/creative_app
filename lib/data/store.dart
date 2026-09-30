@@ -117,7 +117,6 @@ class Store extends ChangeNotifier {
   List<Json> get trades => list('trades');
   List<Json> get docs => list('docs');
   List<Json> get vehicles => list('vehicles');
-  List<Json> get payments => list('payments');
   Json get lookups => obj('lookups');
   Json get settings => obj('settings');
   Json get company => obj('company');
@@ -127,7 +126,7 @@ class Store extends ChangeNotifier {
   Json? worker(String? id) => allWorkers.cast<Json?>().firstWhere((w) => w!['id'] == id, orElse: () => null);
   Json? project(String? id) => list('projects').cast<Json?>().firstWhere((p) => p!['id'] == id, orElse: () => null);
   /// Overtime paid through an overtime payout or inside an approved salary payroll.
-  Set<String> get paidIds => {...paidSet(payments), for (final e in _ot) if (str(e['paidBy']).isNotEmpty) str(e['id'])};
+  Set<String> get paidIds => {for (final e in _ot) if (str(e['paidBy']).isNotEmpty) str(e['id'])};
 
   /// Module permission (admins see everything; `users` is admin-only; advances ride on payroll).
   bool can(String module) {

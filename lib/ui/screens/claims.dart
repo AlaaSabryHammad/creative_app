@@ -5,7 +5,6 @@ import '../../data/extract.dart';
 import '../../data/store.dart';
 import '../doc_pick.dart';
 import '../widgets.dart';
-import 'payments.dart' show DateField;
 
 /// A project's payment claims (المستخلصات): totals, progress and the list; staff with the projects
 /// permission add claims — a photo or PDF of the claim is read by the AI (same rules as the web).

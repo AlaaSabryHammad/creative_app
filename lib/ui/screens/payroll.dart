@@ -46,7 +46,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
         ? [for (final s in r[1]) {...Map<String, dynamic>.from(s['data'] as Map), 'paid': s['paid']}]
         : [
             for (final w in store.allWorkers.where((w) => (w['active'] != false || touched.contains(w['id'])) && (str(w['joined']).isEmpty || str(w['joined']).compareTo(last) <= 0)))
-              payslip(worker: w, month: month, from: _per.custom?.$1, to: _per.custom?.$2, attendance: r[2], overtime: store.entries, deductions: r[3], advances: r[4], paidOtIds: paidSet(store.payments), s: store.pay),
+              payslip(worker: w, month: month, from: _per.custom?.$1, to: _per.custom?.$2, attendance: r[2], overtime: store.entries, deductions: r[3], advances: r[4], s: store.pay),
           ];
     if (!mounted || _per.month != month) return;
     final run = approved ? r[0].first : null;

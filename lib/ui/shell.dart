@@ -33,7 +33,7 @@ final groups = <(String, List<Module>)>[
     Module('dashboard', 'لوحة الملخص', Icons.space_dashboard_outlined, () => const DashboardScreen()),
     Module('attendance', 'كشف اليوم', Icons.event_available_outlined, () => const DailyScreen()),
     Module('requests', 'الطلبات والاعتماد', Icons.fact_check_outlined, () => const RequestsScreen()),
-    Module('workers', 'العمال والرواتب', Icons.groups_outlined, () => const WorkersHub(), ['workers', 'record', 'deductions', 'payroll', 'payments']),
+    Module('workers', 'العمال والرواتب', Icons.groups_outlined, () => const WorkersHub(), ['workers', 'record', 'deductions', 'payroll']),
   ]),
   ('المشاريع', [Module('projects', 'المشاريع', Icons.apartment_outlined, () => const ProjectsScreen())]),
   ('المنشأة', [
