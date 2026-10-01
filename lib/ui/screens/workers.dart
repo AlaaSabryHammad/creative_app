@@ -6,6 +6,7 @@ import '../../core/theme.dart';
 import '../../data/store.dart';
 import '../widgets.dart';
 import '../report.dart';
+import 'whatsapp.dart';
 import 'worker_form.dart';
 
 class WorkersScreen extends StatefulWidget {
@@ -108,7 +109,11 @@ class _WorkersScreenState extends State<WorkersScreen> {
           const SizedBox(height: 10),
           Text(str(w['name']), textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
           Text('${w['id']} · ${w['trade']}', textAlign: TextAlign.center, style: const TextStyle(color: C.fg3)),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          Center(child: FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
+            onPressed: () => sendWhatsApp(context, w), icon: const Icon(Icons.chat_outlined), label: const Text('رسالة واتساب'))),
+          const SizedBox(height: 12),
           KV('الموقع الحالي', str(store.project(store.site(str(w['id'])))?['name'])),
           KV('الجنسية', str(w['nat'])),
           KV('رقم الهوية', str(w['iqama'])),
