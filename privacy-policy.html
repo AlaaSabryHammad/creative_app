@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سياسة الخصوصية | تطبيق CREATIVE (كريتيف)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0B0F19;
+      --card-bg: #111827;
+      --border: #1F2937;
+      --text: #F3F4F6;
+      --muted: #9CA3AF;
+      --primary: #38BDF8;
+      --primary-hover: #0284C7;
+      --accent: #F43F5E;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Cairo', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.8;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 35px;
+      padding-bottom: 25px;
+      border-bottom: 1px solid var(--border);
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 14px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--primary);
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: 30px;
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 15px;
+    }
+    .lang-switcher {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 15px;
+    }
+    .lang-btn {
+      background: #1E293B;
+      color: #E2E8F0;
+      border: 1px solid #334155;
+      padding: 6px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .lang-btn.active {
+      background: var(--primary);
+      color: #0F172A;
+      border-color: var(--primary);
+    }
+    h2 {
+      font-size: 20px;
+      color: var(--primary);
+      margin: 28px 0 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    p, ul {
+      color: #D1D5DB;
+      font-size: 15px;
+      margin-bottom: 14px;
+    }
+    ul {
+      padding-right: 22px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    .highlight-box {
+      background: rgba(56, 189, 248, 0.05);
+      border-right: 4px solid var(--primary);
+      padding: 16px 20px;
+      border-radius: 0 12px 12px 0;
+      margin: 20px 0;
+    }
+    .footer {
+      margin-top: 40px;
+      padding-top: 25px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    [dir="ltr"] {
+      text-align: left;
+    }
+    [dir="ltr"] ul {
+      padding-left: 22px;
+      padding-right: 0;
+    }
+    [dir="ltr"] .highlight-box {
+      border-right: none;
+      border-left: 4px solid var(--primary);
+      border-radius: 12px 0 0 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="badge">وثيقة رسمية · Official Policy</div>
+      <h1>سياسة الخصوصية · Privacy Policy</h1>
+      <p class="subtitle">تطبيق CREATIVE لإدارة المقاولات والمشاريع الميدانية</p>
+      <div class="lang-switcher">
+        <button class="lang-btn active" onclick="setLang('ar')">العربية</button>
+        <button class="lang-btn" onclick="setLang('en')">English</button>
+      </div>
+    </div>
+
+    <!-- المحتوى العربي -->
+    <div id="content-ar">
+      <p>تاريخ آخر تحديث: <strong>9 أكتوبر 2026</strong></p>
+      <p>تلتزم <strong>مؤسسة ابراهيم حميدي العنزي للمقاولات العامة</strong> ("المؤسسة"، "نحن") باحترام وحماية خصوصية مستخدمي تطبيق الهاتف المحمول <strong>CREATIVE</strong> ("التطبيق"). توضح هذه السياسة طبيعة البيانات التي نقوم بجمعها، وكيفية استخدامها وحمايتها عند استخدام التطبيق.</p>
+
+      <h2>1. البيانات التي نقوم بجمعها</h2>
+      <ul>
+        <li><strong>بيانات الموقع الجغرافي (Location Data):</strong> يطلب التطبيق إذن الوصول إلى الموقع التقريبي والدقيق (<code>ACCESS_FINE_LOCATION</code>, <code>ACCESS_COARSE_LOCATION</code>) فقط عند حفظ واعتماد كشف الحضور اليومي الميداني (Daily Sheet). يتم استخدام الإحداثيات حصراً للتحقق من تواجد المشرف الميداني داخل نطاق موقع المشروع المعتمد، ولا نقوم بتتبع الموقع بشكل مستمر أو جمع بيانات الموقع في الخلفية خارج إطار هذا الإجراء.</li>
+        <li><strong>بيانات الحساب الشخصية (Account Information):</strong> نجمع بيانات تسجيل الدخول التي تشمل الاسم، ورقم الهوية/الإقامة، والبريد الإلكتروني، والمسمى الوظيفي، وكلمة المرور المشفرة لغرض التحقق من الهوية وإدارة صلاحيات المستخدمين.</li>
+        <li><strong>بيانات الحضور والعمل الميداني:</strong> سجلات الحضور والغياب، وساعات العمل الفعلي والإضافي، والبدلات الميدانية، والخصومات، ومسيرات الرواتب، والتي تُدخل من قِبل المشرفين المصرح لهم.</li>
+        <li><strong>بيانات الجهاز والإشعارات (Device & Notifications):</strong> يطلب التطبيق إذن إرسال الإشعارات (<code>POST_NOTIFICATIONS</code>) لتنبيه المستخدمين بالمستجدات التشغيلية، ومواعيد انتهاء الوثائق الرسمية، وتحديثات جداول العمل.</li>
+      </ul>
+
+      <h2>2. الغرض من استخدام البيانات</h2>
+      <p>نستخدم البيانات التي نجمعها لتحقيق الأغراض المشروعة التالية:</p>
+      <ul>
+        <li>تمكين الوظائف الأساسية للتطبيق وإدارة العمليات الميدانية والمشاريع.</li>
+        <li>التحقق من صحة ومصداقية تسجيل حضور وانصراف الكوادر في مواقع العمل الفعلية.</li>
+        <li>حساب أجور وساعات العمل الإضافية وإصدار التقارير الإدارية والمالية الداخلية.</li>
+        <li>إرسال الإشعارات والتنبيهات الميدانية والإدارية الهامة.</li>
+        <li>حماية أمن النظام ومنع محاولات التلاعب أو الدخول غير المصرح به.</li>
+      </ul>
+
+      <div class="highlight-box">
+        <strong>عدم بيع أو مشاركة البيانات لأغراض إعلانية:</strong>
+        نحن لا نقوم على الإطلاق ببيع أو تأجير أو مشاركة أي بيانات شخصية أو بيانات مواقع مع أي جهات تسويقية أو إعلانية تابعة لأطراف ثالثة.
+      </div>
+
+      <h2>3. البنية التحتية ومزودو الخدمات</h2>
+      <p>يتم تخزين بيانات التطبيق ومعالجتها بشكل آمن باستخدام منصة <strong>Supabase</strong> السحابية، مع تطبيق معايير الأمان المتقدمة وسياسات الوصول على مستوى الصفوف (Row Level Security - RLS)، وتشفير جميع الاتصالات بتقنية HTTPS / TLS المشفرة أثناء النقل والتخزين.</p>
+
+      <h2>4. الاحتفاظ بالبيانات وحذفها (Data Retention & Deletion)</h2>
+      <p>نحتفظ ببيانات العمل طالما كان حساب المستخدم نشطاً أو بالقدر اللازم للامتثال للمتطلبات النظامية والعمالية في المملكة العربية السعودية. يحق لأي مستخدم أو موظف طلب مراجعة بياناته، تصحيحها، أو طلب حذف حسابه من خلال التواصل مع إدارة المؤسسة عبر قنوات التواصل المعتمدة أدناه.</p>
+
+      <h2>5. أمن البيانات (Data Security)</h2>
+      <p>نطبق إجراءات تقنية وإدارية صارمة تشمل المصادقة المشفرة، والتسجيل الآمن للأحداث، وحظر الوصول غير المصرح به، لضمان حماية بياناتكم الشخصية والتشغيلية.</p>
+
+      <h2>6. تواصل معنا (Contact Information)</h2>
+      <p>إذا كانت لديك أي أسئلة أو استفسارات تتعلق بسياسة الخصوصية هذه، يمكنك التواصل معنا عبر:</p>
+      <ul>
+        <li><strong>الجهة:</strong> مؤسسة ابراهيم حميدي العنزي للمقاولات العامة</li>
+        <li><strong>البريد الإلكتروني المخصص للخصوصية:</strong> <code>support@alhemedy.com</code> أو <code>alaasabryhammad@gmail.com</code></li>
+        <li><strong>المقر:</strong> المملكة العربية السعودية - حفر الباطن</li>
+      </ul>
+    </div>
+
+    <!-- English Content -->
+    <div id="content-en" style="display:none;" dir="ltr">
+      <p>Last updated: <strong>October 9, 2026</strong></p>
+      <p><strong>Ibrahim Humaidy Al-Enezi Contracting Est.</strong> ("Company", "we", "us") is committed to protecting your privacy. This Privacy Policy explains how our mobile application <strong>CREATIVE</strong> ("Application") collects, uses, and safeguards your information.</p>
+
+      <h2>1. Information We Collect</h2>
+      <ul>
+        <li><strong>Location Data:</strong> The Application requests precise and approximate location permissions (<code>ACCESS_FINE_LOCATION</code>, <code>ACCESS_COARSE_LOCATION</code>) solely when a jobsite supervisor submits or updates a Daily Attendance Sheet. The coordinates are used strictly to verify that the attendance log is being recorded within the designated project jobsite bounds. We do not perform background continuous tracking.</li>
+        <li><strong>User & Account Information:</strong> We collect user authentication credentials including user full name, National ID / Iqama number, email address, job role, and encrypted authentication tokens.</li>
+        <li><strong>Workforce & Project Logs:</strong> Attendance status, regular work hours, overtime duration, meal allowances, operational project milestones, and payroll accounting records entered by authorized company staff.</li>
+        <li><strong>Device & Notification Permissions:</strong> The Application utilizes <code>POST_NOTIFICATIONS</code> to deliver essential shift alerts, document expiration reminders, and operational updates.</li>
+      </ul>
+
+      <h2>2. How We Use Collected Information</h2>
+      <ul>
+        <li>To operate core contracting, workforce management, and project tracking features.</li>
+        <li>To ensure location verification and integrity of field attendance records.</li>
+        <li>To compute accurate overtime hours and generate corporate analytical metrics.</li>
+        <li>To send vital operational notices and administrative alerts.</li>
+        <li>To safeguard organizational data security and prevent fraudulent access.</li>
+      </ul>
+
+      <div class="highlight-box">
+        <strong>No Sale or Third-Party Advertising:</strong>
+        We do not sell, rent, or trade your personal information or location data to any third-party advertisers or commercial data brokers under any circumstances.
+      </div>
+
+      <h2>3. Cloud Infrastructure & Third-Party Service Providers</h2>
+      <p>Application backend services and databases are securely hosted via <strong>Supabase</strong> with Row-Level Security (RLS) enforcement. All data in transit is encrypted using industry-standard HTTPS / TLS protocols.</p>
+
+      <h2>4. Data Retention & Account Deletion</h2>
+      <p>Operational data is retained for the duration of the employment relationship or contract term, in adherence to labor regulations in the Kingdom of Saudi Arabia. Users may request access, correction, or deletion of their account records by contacting our administrative team.</p>
+
+      <h2>5. Contact Us</h2>
+      <p>If you have any questions or feedback regarding this Privacy Policy, please contact us at:</p>
+      <ul>
+        <li><strong>Entity:</strong> Ibrahim Humaidy Al-Enezi Contracting Est.</li>
+        <li><strong>Email:</strong> <code>support@alhemedy.com</code> / <code>alaasabryhammad@gmail.com</code></li>
+        <li><strong>Location:</strong> Hafar Al-Batin, Eastern Province, Kingdom of Saudi Arabia</li>
+      </ul>
+    </div>
+
+    <div class="footer">
+      <p>© 2026 مؤسسة ابراهيم حميدي العنزي للمقاولات · جميع الحقوق محفوظة</p>
+    </div>
+  </div>
+
+  <script>
+    function setLang(lang) {
+      const ar = document.getElementById('content-ar');
+      const en = document.getElementById('content-en');
+      const btns = document.querySelectorAll('.lang-btn');
+      if (lang === 'ar') {
+        ar.style.display = 'block';
+        en.style.display = 'none';
+        document.body.dir = 'rtl';
+        btns[0].classList.add('active');
+        btns[1].classList.remove('active');
+      } else {
+        ar.style.display = 'none';
+        en.style.display = 'block';
+        document.body.dir = 'ltr';
+        btns[1].classList.add('active');
+        btns[0].classList.remove('active');
+      }
+    }
+  </script>
+</body>
+</html>
