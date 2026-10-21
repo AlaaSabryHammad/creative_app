@@ -65,6 +65,45 @@ void main() {
     expect([joiner['employedDays'], joiner['base']], [15, 1500]);
   });
 
+  test('days not yet in an approved payroll: from the day after the last payroll ends until today', () {
+    const s26 = PaySettings(startDay: 26);
+    Json slip(String month, [String? to]) => {'month': month, 'data': {'to': ?to}};
+    // A payroll approved for 26 Aug – 25 Sep: the next days start on the 26th.
+    expect(unpaidStart([slip('2026-09', '2026-09-25')], s26, '2026-10-12'), ('2026-09-26', '2026-09-25'));
+    // The latest payslip wins, whatever the list order; a custom period ending mid-month starts the day after.
+    expect(unpaidStart([slip('2026-10', '2026-10-25'), slip('2026-09', '2026-09-25'), slip('2026-10', '2026-10-20')], s26, '2026-10-27'), ('2026-10-26', '2026-10-25'));
+    expect(unpaidStart([slip('2026-09', '2026-10-20')], s26, '2026-10-27'), ('2026-10-21', '2026-10-20'));
+    // Month and year ends roll over.
+    expect(unpaidStart([slip('2026-12', '2026-12-31')], s, '2027-01-05'), ('2027-01-01', '2026-12-31'));
+    // Older payslips without their own dates use the end of their payroll month.
+    expect(unpaidStart([slip('2026-09')], s26, '2026-10-12'), ('2026-09-26', '2026-09-25'));
+    expect(unpaidStart([slip('2026-08')], s, '2026-10-12'), ('2026-09-01', '2026-08-31'));
+    // No payslip yet: the current payroll period.
+    expect(unpaidStart([], s26, '2026-10-12'), ('2026-09-26', ''));
+    expect(unpaidStart([], s26, '2026-10-27'), ('2026-10-26', ''));
+    expect(unpaidStart([], s, '2026-10-12'), ('2026-10-01', ''));
+
+    // Overtime and meals of those days only: approved ones, not paid separately, from the 26th to today.
+    final att = [
+      for (final d in ['2026-09-24', '2026-09-26', '2026-09-30', '2026-10-05', '2026-10-12'])
+        {'worker_id': 'W-1', 'date': d, 'status': 'present', 'breakfast': true, 'lunch': true, 'breakfast_price': 5, 'lunch_price': 15, 'approval': 'approved'},
+      {'worker_id': 'W-1', 'date': '2026-10-08', 'status': 'present', 'breakfast': true, 'lunch': true, 'breakfast_price': 5, 'lunch_price': 15, 'approval': 'pending'},
+      {'worker_id': 'W-1', 'date': '2026-10-13', 'status': 'present', 'breakfast': true, 'lunch': true, 'breakfast_price': 5, 'lunch_price': 15, 'approval': 'approved'},
+    ];
+    final ot = [
+      {'id': 'o0', 'workerId': 'W-1', 'date': '2026-09-24', 'hours': 9, 'rate': 20, 'status': 'approved', 'dayType': 'normal'}, // paid in the last payroll
+      {'id': 'o1', 'workerId': 'W-1', 'date': '2026-09-27', 'hours': 2, 'rate': 20, 'status': 'approved', 'dayType': 'normal'},
+      {'id': 'o2', 'workerId': 'W-1', 'date': '2026-10-02', 'hours': 3, 'rate': 20, 'status': 'approved', 'dayType': 'friday'},
+      {'id': 'o3', 'workerId': 'W-1', 'date': '2026-10-03', 'hours': 4, 'rate': 20, 'status': 'pending', 'dayType': 'normal'},
+      {'id': 'o4', 'workerId': 'W-1', 'date': '2026-10-04', 'hours': 5, 'rate': 20, 'status': 'approved', 'dayType': 'normal'}, // paid through a payout
+    ];
+    final (from, _) = unpaidStart([slip('2026-09', '2026-09-25')], s26, '2026-10-12');
+    final r = payslip(worker: w, month: '2026-10', from: from, to: '2026-10-12', attendance: att, overtime: ot, deductions: [], advances: [], paidOtIds: {'o4'}, s: s26);
+    expect([r['overtime']['hours'], r['overtime']['amount']], [5, 100]);
+    // Meals: 26 Sep, 30 Sep, 5 Oct and 12 Oct. Not counted: 24 Sep (last payroll), 8 Oct (sheet still pending), 13 Oct (after today).
+    expect(r['meals'], {'breakfast': 4, 'lunch': 4, 'amount': 80, 'breakfastAmount': 20, 'lunchAmount': 60});
+  });
+
   test('end-of-service award', () {
     ({double years, double full, double share, double amount})? g(String joined, String end, String reason) => gratuity({'salary': 3000, 'joined': joined}, end, reason);
     expect(serviceYears('2019-09-28', '2026-09-28'), 7);

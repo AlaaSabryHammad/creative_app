@@ -13,14 +13,16 @@ import 'screens/projects.dart';
 import 'screens/docs.dart';
 import 'screens/vehicles.dart';
 import 'screens/more.dart';
+import 'screens/my_custody.dart';
 
 class Module {
   final String key, label;
   final IconData icon;
   final Widget Function() build;
   final List<String> keys; // permissions that make this menu item visible
-  const Module(this.key, this.label, this.icon, this.build, [List<String>? keys]) : keys = keys ?? const [];
-  bool get visible => (keys.isEmpty ? [key] : keys).any(store.can);
+  final bool Function()? when; // or a condition instead (e.g. the user holds custody)
+  const Module(this.key, this.label, this.icon, this.build, [List<String>? keys, this.when]) : keys = keys ?? const [];
+  bool get visible => when != null ? when!() : (keys.isEmpty ? [key] : keys).any(store.can);
 }
 
 // Same grouping and permission keys as the web sidebar.
@@ -35,7 +37,11 @@ final groups = <(String, List<Module>)>[
     Module('requests', 'الطلبات والاعتماد', Icons.fact_check_outlined, () => const RequestsScreen()),
     Module('workers', 'العمال والرواتب', Icons.groups_outlined, () => const WorkersHub(), ['workers', 'record', 'deductions', 'payroll']),
   ]),
-  ('المشاريع', [Module('projects', 'المشاريع', Icons.apartment_outlined, () => const ProjectsScreen())]),
+  ('المشاريع', [
+    Module('projects', 'المشاريع', Icons.apartment_outlined, () => const ProjectsScreen()),
+    // The user's own custody and invoices: shown to anyone linked to a custody account (not a permission).
+    Module('mycustody', 'عهدتي', Icons.savings_outlined, () => const MyCustodyScreen(), null, () => store.hasCustody),
+  ]),
   ('المنشأة', [
     Module('docs', 'ملفات المنشأة', Icons.folder_shared_outlined, () => const DocsScreen()),
     Module('vehicles', 'السيارات والمعدات', Icons.directions_car_outlined, () => const VehiclesScreen()),

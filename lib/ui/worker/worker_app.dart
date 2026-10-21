@@ -8,6 +8,7 @@ import '../../core/theme.dart';
 import '../../data/store.dart';
 import '../report.dart';
 import '../screens/payroll.dart' show SlipDetails;
+import '../screens/my_custody.dart';
 import '../widgets.dart';
 
 /// The worker's own app: their attendance, overtime, pay, requests and details — nothing about anyone else.
@@ -31,7 +32,9 @@ class _WorkerShellState extends State<WorkerShell> {
   @override
   Widget build(BuildContext context) {
     final pending = store.myReq.where((r) => r['status'] == 'pending').length;
-    final tabs = [const _Home(), const _Attendance(), const _Pay(), const _Requests(), const _Account()];
+    // "My custody" is the last tab and only exists for a worker who holds custody, so the other tabs keep their numbers.
+    final tabs = [const _Home(), const _Attendance(), const _Pay(), const _Requests(), const _Account(), if (store.hasCustody) const MyCustodyScreen()];
+    final tab = _tab < tabs.length ? _tab : 0;
     final unread = store.unread;
     return Scaffold(
       appBar: AppBar(
@@ -48,9 +51,9 @@ class _WorkerShellState extends State<WorkerShell> {
           IconButton(icon: const Icon(Icons.refresh), onPressed: () => store.refresh()),
         ],
       ),
-      body: RefreshIndicator(onRefresh: store.refresh, child: tabs[_tab]),
+      body: RefreshIndicator(onRefresh: store.refresh, child: tabs[tab]),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _tab,
+        selectedIndex: tab,
         onDestinationSelected: (i) => setState(() => _tab = i),
         destinations: [
           NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: tr('home')),
@@ -58,6 +61,7 @@ class _WorkerShellState extends State<WorkerShell> {
           NavigationDestination(icon: const Icon(Icons.account_balance_wallet_outlined), selectedIcon: const Icon(Icons.account_balance_wallet), label: tr('pay')),
           NavigationDestination(icon: Badge(isLabelVisible: pending > 0, label: Text('$pending'), child: const Icon(Icons.inbox_outlined)), label: tr('requests')),
           NavigationDestination(icon: const Icon(Icons.person_outline), selectedIcon: const Icon(Icons.person), label: tr('account')),
+          if (store.hasCustody) NavigationDestination(icon: const Icon(Icons.savings_outlined), selectedIcon: const Icon(Icons.savings), label: tr('cuTitle')),
         ],
       ),
     );
@@ -164,6 +168,9 @@ class _Home extends StatelessWidget {
           decoration: BoxDecoration(color: iq < 0 ? C.danger50 : C.warning50, borderRadius: BorderRadius.circular(14)),
           child: Row(children: [Icon(Icons.badge_outlined, color: iq < 0 ? C.danger : C.warning), const SizedBox(width: 8), Expanded(child: Text(iq < 0 ? tr('iqamaExpired', -iq) : tr('iqamaSoon', iq), style: const TextStyle(fontWeight: FontWeight.w700)))]),
         ),
+      // Overtime and meals of every day not yet in an approved payroll: from the day after the last payroll's end
+      // (e.g. paid on the 25th → from the 26th) until today.
+      _Unpaid(slips: store.mySlips),
       SectionTitle('${tr('thisMonth')} — ${wMonth(month)}'),
       CardBox(
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -204,6 +211,58 @@ class _Home extends StatelessWidget {
         _SlipTile(store.mySlips.first),
       ],
     ]);
+  }
+}
+
+/// The worker's overtime and meals since the last approved payroll, up to today (approved days only, like the payslip).
+class _Unpaid extends StatelessWidget {
+  final List<Json> slips;
+  const _Unpaid({required this.slips});
+  @override
+  Widget build(BuildContext context) {
+    final p = store.pay, today = todayIso(), w = store.myWorker;
+    final (from, lastTo) = unpaidStart(slips, p, today);
+    final open = from.compareTo(today) <= 0;
+    final s = open
+        ? payslip(worker: w, month: periodMonth(today, p.startDay), from: from, to: today, attendance: store.myAtt, overtime: store.myOt, deductions: const [], advances: const [], paidOtIds: _paidOt, s: p)
+        : null;
+    final ot = s == null ? const <String, dynamic>{} : s['overtime'] as Map, meals = s == null ? const <String, dynamic>{} : s['meals'] as Map;
+    final otAmt = toNum(ot['amount']), mealAmt = toNum(meals['amount']);
+    Widget row(IconData icon, String l, String sub, num v) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(children: [
+            Icon(icon, size: 20, color: C.primary700),
+            const SizedBox(width: 10),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(l, style: const TextStyle(fontWeight: FontWeight.w700)),
+              if (sub.isNotEmpty) Text(sub, style: const TextStyle(fontSize: 12, color: C.fg3)),
+            ])),
+            Text(sar(v), style: const TextStyle(fontWeight: FontWeight.w800)),
+          ]),
+        );
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: CardBox(
+        topStrip: C.primary,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Text(tr('unpaidTitle'), style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 2),
+          Text(open ? tr('unpaidFrom', wDate(from, year: true)) : tr('unpaidNone', wDate(lastTo, year: true)), style: const TextStyle(fontSize: 12.5, color: C.fg3)),
+          if (s != null) ...[
+            const Divider(height: 18),
+            row(Icons.bolt, tr('overtime'), '${fmtNum(toNum(ot['hours']))} ${tr('h')}', otAmt),
+            row(Icons.restaurant, tr('meals'), '${tr('breakfast')} ${meals['breakfast']} · ${tr('lunch')} ${meals['lunch']}', mealAmt),
+            const Divider(height: 18),
+            Row(children: [
+              Expanded(child: Text(tr('unpaidTotal'), style: const TextStyle(fontWeight: FontWeight.w800))),
+              Text(sar(otAmt + mealAmt), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: C.primary700)),
+            ]),
+            const SizedBox(height: 6),
+            Text(tr('unpaidNote'), style: const TextStyle(fontSize: 12, color: C.fg3)),
+          ],
+        ]),
+      ),
+    );
   }
 }
 

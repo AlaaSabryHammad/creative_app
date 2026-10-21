@@ -69,6 +69,23 @@ int daysIn(String from, String to) => DateTime.utc(int.parse(to.substring(0, 4))
 String periodMonth(String date, int startDay) =>
     startDay > 1 && int.parse(date.substring(8, 10)) >= startDay ? addMonths(date.substring(0, 7), 1) : date.substring(0, 7);
 
+/// Where the days not yet in an approved payroll start: the day after the latest payslip's end date (a payroll may be
+/// approved on the 25th, so the next days start on the 26th), or the start of the current payroll period when there is
+/// no payslip yet. Also returns that latest end date ('' when none).
+(String, String) unpaidStart(List<Json> slips, PaySettings s, String today) {
+  var last = '';
+  for (final sl in slips) {
+    final d = sl['data'] is Map ? Map<String, dynamic>.from(sl['data'] as Map) : <String, dynamic>{};
+    // Older payslips carry no dates of their own: use the end of their payroll month.
+    final to = str(d['to']).isNotEmpty ? str(d['to']) : (str(sl['month']).length == 7 ? period(str(sl['month']), s.startDay).$2 : '');
+    if (to.compareTo(last) > 0) last = to;
+  }
+  if (last.isEmpty) return (period(periodMonth(today, s.startDay), s.startDay).$1, '');
+  final next = DateTime.utc(int.parse(last.substring(0, 4)), int.parse(last.substring(5, 7)), int.parse(last.substring(8, 10)) + 1);
+  String pad(int n) => '$n'.padLeft(2, '0');
+  return ('${next.year}-${pad(next.month)}-${pad(next.day)}', last);
+}
+
 /// One worker's month (same shape as payslips.data). attendance/deductions/advances are table rows;
 /// overtime uses the app's entry shape; paidOtIds = overtime already paid through overtime payouts.
 /// The project a worker's month belongs to (see pay.js otMainProject): where most attendance days were

@@ -192,6 +192,7 @@ class Store extends ChangeNotifier {
         await _loadWorker();
         unawaited(Notices.register(sb, isWorker ? lang ?? defaultLang(myWorker) : 'ar'));
       }
+      await _loadCustody();
       notifyListeners();
       return null;
     } catch (e) {
@@ -273,7 +274,29 @@ class Store extends ChangeNotifier {
   Future<void> refresh() async {
     if (!isWorker) await _loadState();
     if (hasWorker) await _loadWorker();
+    await _loadCustody();
     notifyListeners();
+  }
+
+  // ---------- The user's own custody (cash given to them, their invoices and returns) ----------
+
+  /// my_custody() (see schema.sql): only the holders linked to this user — by their worker record or their
+  /// login — with their transactions, closed-year summaries and the names of the projects they were charged to.
+  /// Empty when the user holds no custody (or the function is not installed yet).
+  Json myCustody = {};
+  bool get hasCustody => ((myCustody['holders'] as List?) ?? const []).isNotEmpty;
+  List<Json> get custodyHolders => [for (final h in (myCustody['holders'] as List?) ?? const []) Map<String, dynamic>.from(h as Map)];
+  List<Json> get custodyTxs => [for (final t in (myCustody['txs'] as List?) ?? const []) Map<String, dynamic>.from(t as Map)];
+  List<Json> get custodyArchive => [for (final a in (myCustody['archive'] as List?) ?? const []) Map<String, dynamic>.from(a as Map)];
+  String custodyProject(String id) => str((myCustody['projects'] as Map?)?[id]);
+
+  Future<void> _loadCustody() async {
+    try {
+      final r = await sb.rpc('my_custody');
+      myCustody = r is Map ? Map<String, dynamic>.from(r) : {};
+    } catch (_) {
+      myCustody = {};
+    }
   }
 
   /// Versioned write through the save_state RPC. Returns an Arabic error message, or null on success.
@@ -448,6 +471,7 @@ class Store extends ChangeNotifier {
     try {
       await Notices.poll();
       await _loadWorker();
+      await _loadCustody();
       notifyListeners();
     } catch (_) {}
   }
@@ -518,6 +542,7 @@ class Store extends ChangeNotifier {
     _ot = [];
     myOt = [];
     mine = {};
+    myCustody = {};
     myAtt = myDed = myAdv = myReq = mySlips = myNotes = [];
     sites = {};
     notifyListeners();

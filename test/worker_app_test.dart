@@ -65,6 +65,10 @@ void main() {
         home: const WorkerShell(),
       ));
       await tester.pump();
+      // The home tab opens with the overtime and meals since the last payroll, then this month's estimate.
+      expect(find.text(tr('unpaidTitle')), findsOneWidget);
+      expect(find.text(tr('unpaidTotal')), findsOneWidget);
+      await tester.scrollUntilVisible(find.text(tr('net')), 200);
       expect(find.text(tr('net')), findsWidgets);
       await tester.scrollUntilVisible(find.text(tr('gratuity')), 200);
       expect(find.text(tr('gratuity')), findsOneWidget);
@@ -117,6 +121,58 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    // A worker who holds custody gets a sixth tab with their own account: balance, ledger, an invoice with its details.
+    testWidgets('custody tab in $code', (tester) async {
+      tester.view.physicalSize = const Size(360 * 3, 740 * 3);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(() {
+        tester.view.reset();
+        store.myCustody = {};
+        store.workerTab = 0;
+      });
+      lang = code;
+      store.workerTab = 5;
+      store.myCustody = {
+        'holders': [{'id': 'h1', 'name': 'Rajesh Kumar Subramanian'}],
+        'txs': [
+          {'id': 'g', 'type': 'give', 'holderId': 'h1', 'date': '2026-09-28', 'amount': 5000, 'method': 'تحويل بنكي', 'at': '1'},
+          {'id': 'e', 'type': 'expense', 'holderId': 'h1', 'date': '2026-10-01', 'projectId': 'p1', 'supplier': 'Al Rayyan Building Materials Trading Est.', 'number': '1042', 'cat': 'مواد بناء', 'vatRate': '15',
+            'items': [{'desc': 'Cement 50 kg', 'unit': 'bag', 'qty': 40, 'rate': 18}], 'notes': 'Delivered to site', 'at': '2'},
+          {'id': 'r', 'type': 'return', 'holderId': 'h1', 'date': '2026-10-12', 'amount': 500, 'at': '3'},
+        ],
+        'archive': [{'id': 'z', 'holderId': 'h1', 'year': 2025, 'mode': 'zero', 'balance': -20}],
+        'projects': {'p1': 'برج الريان السكني — المرحلة الثانية'},
+      };
+      await tester.pumpWidget(MaterialApp(
+        locale: Locale(code),
+        supportedLocales: [for (final l in workerLangs.keys) Locale(l)],
+        localizationsDelegates: const [GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
+        home: const WorkerShell(),
+      ));
+      await tester.pump();
+      expect(find.text(tr('cuHeld')), findsOneWidget);
+      expect(find.text(tr('cuTitle')), findsWidgets); // the tab label and the header
+      // The chips scroll sideways on a narrow phone: filter to the invoices, then back to all.
+      for (final k in ['cuExpense', 'cuAll']) {
+        final chip = find.widgetWithText(ChoiceChip, tr(k));
+        await tester.dragUntilVisible(chip, find.byType(ListView).first, const Offset(0, -150));
+        await tester.ensureVisible(chip);
+        await tester.pump();
+        await tester.tap(chip);
+        await tester.pump();
+      }
+      await tester.dragUntilVisible(find.textContaining('#1042'), find.byType(ListView).first, const Offset(0, -150));
+      await tester.tap(find.textContaining('#1042'));
+      await tester.pumpAndSettle();
+      expect(find.text(tr('cuTotal')), findsOneWidget);
+      expect(find.text('Cement 50 kg'), findsOneWidget);
+      await tester.tapAt(const Offset(180, 30));
+      await tester.pumpAndSettle();
+      await tester.dragUntilVisible(find.text(tr('cuArchive')), find.byType(ListView).first, const Offset(0, -250));
+      expect(find.text(tr('cuArchive')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('notifications in $code', (tester) async {
       tester.view.physicalSize = const Size(360 * 3, 740 * 3);
       tester.view.devicePixelRatio = 3;
@@ -144,7 +200,7 @@ void main() {
       // Tapping a notice opens its tab (vehicle → home).
       await tester.tap(last);
       await tester.pumpAndSettle();
-      expect(find.text(tr('net')), findsWidgets);
+      expect(find.text(tr('unpaidTitle')), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
