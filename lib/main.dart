@@ -6,6 +6,7 @@ import 'core/i18n.dart';
 import 'core/theme.dart';
 import 'data/notices.dart';
 import 'data/store.dart';
+import 'data/update.dart';
 import 'ui/login.dart';
 import 'ui/shell.dart';
 import 'ui/worker/worker_app.dart';
@@ -14,6 +15,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting();  // every locale: the worker app speaks several languages
   await Supabase.initialize(url: sbUrl, publishableKey: sbKey);
+  await updater.check();  // forced update: asked before anything is shown (see data/update.dart)
   await Notices.start();  // worker notifications (see data/notices.dart)
   runApp(const CreativeApp());
 }
@@ -33,6 +35,7 @@ class CreativeApp extends StatelessWidget {
             locale: Locale(lang),
             supportedLocales: [for (final l in workerLangs.keys) Locale(l)],
             localizationsDelegates: const [GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
+            builder: (context, child) => UpdateGuard(child: child ?? const SizedBox.shrink()),
             home: const _Gate(),
           );
         },
@@ -51,7 +54,10 @@ class _GateState extends State<_Gate> with WidgetsBindingObserver {
   String? _notice;
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) store.resumeWorker();
+    if (state == AppLifecycleState.resumed) {
+      store.resumeWorker();
+      updater.check();  // a phone that was left open can be forced to update when it comes back
+    }
   }
   @override
   void dispose() {
