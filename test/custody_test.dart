@@ -31,6 +31,18 @@ void main() {
       expect(invTotals({'items': [_item('a', 1, 100)], 'discount': 500}).total, 0, reason: 'a discount larger than the invoice never goes negative');
     });
 
+    test('pending and rejected invoices are listed but never counted in the balance', () {
+      final pending = {'id': 'p1', 'type': 'expense', 'holderId': 'h1', 'date': '2026-10-20', 'supplier': 'x', 'vatRate': '15', 'items': [_item('a', 1, 1000)], 'status': 'pending', 'at': '9'};
+      final rejected = {...pending, 'id': 'p2', 'status': 'rejected'};
+      final approved = {...pending, 'id': 'p3', 'status': 'approved'};
+      final base = custodyTotals(_txs);
+      expect(custodyTotals([..._txs, pending, rejected]).balance, base.balance);
+      expect(custodyTotals([..._txs, approved]).spent, base.spent + 1150);
+      expect(deltaOf(pending), 0);
+      expect(statusOf(_txs[1]), 'approved', reason: 'older invoices without a status are approved');
+      expect(custodyLedger([..._txs, pending]).last.$2, custodyLedger(_txs).last.$2, reason: 'the running balance does not move');
+    });
+
     test('totals and balance of an account', () {
       final t = custodyTotals(_txs);
       expect(t.given, 5000);

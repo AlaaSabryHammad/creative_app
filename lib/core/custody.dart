@@ -27,8 +27,13 @@ InvTotals invTotals(Json inv) {
 
 double amountOf(Json t) => t['type'] == 'expense' ? invTotals(t).total : toNum(t['amount']);
 
+/// An invoice added by the user waits for the accounts manager ('pending') and may be 'rejected'; only approved ones
+/// count in balances. Invoices without a status (older records, or entered by the accounts manager) are approved.
+String statusOf(Json t) => t['type'] == 'expense' && str(t['status']).isNotEmpty ? str(t['status']) : 'approved';
+bool counts(Json t) => statusOf(t) == 'approved';
+
 /// Effect on what the person is holding: cash given and an opening balance add, expenses and returns subtract.
-double deltaOf(Json t) => t['type'] == 'expense' || t['type'] == 'return' ? -amountOf(t) : amountOf(t);
+double deltaOf(Json t) => !counts(t) ? 0 : (t['type'] == 'expense' || t['type'] == 'return' ? -amountOf(t) : amountOf(t));
 
 class CustodyTotals {
   final double opening, given, spent, spentProject, spentOutside, returned;
@@ -39,6 +44,7 @@ class CustodyTotals {
 CustodyTotals custodyTotals(Iterable<Json> txs) {
   double opening = 0, given = 0, spent = 0, spentProject = 0, spentOutside = 0, returned = 0;
   for (final x in txs) {
+    if (!counts(x)) continue;
     final a = amountOf(x);
     switch (str(x['type'])) {
       case 'open':

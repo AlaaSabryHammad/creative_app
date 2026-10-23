@@ -135,6 +135,7 @@ class _TxTile extends StatelessWidget {
         ? '${str(t['supplier']).isEmpty ? tr('cuExpense') : str(t['supplier'])}${str(t['number']).isEmpty ? '' : ' · #${t['number']}'}'
         : type == 'give' && str(t['method']).isNotEmpty ? '${tr(key)} — ${t['method']}' : tr(key);
     final project = str(t['projectId']);
+    final st = statusOf(t);  // pending / rejected invoices are listed but not counted in the balance
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: CardBox(
@@ -149,10 +150,15 @@ class _TxTile extends StatelessWidget {
             if (expense) ...[
               const SizedBox(height: 6),
               Wrap(spacing: 6, runSpacing: 4, children: [
+                if (st != 'approved') Pill(tr(st == 'rejected' ? 'cuRejected' : 'cuPending'), tone: st == 'rejected' ? Tone.red : Tone.orange),
                 if (str(t['cat']).isNotEmpty) Pill(str(t['cat'])),
                 project.isEmpty ? Pill(tr('cuOutside'), tone: Tone.orange) : Pill(store.custodyProject(project).isEmpty ? tr('cuProject') : store.custodyProject(project), tone: Tone.blue, icon: Icons.apartment_outlined),
                 if (t['file'] is Map) const Icon(Icons.attach_file, size: 16, color: C.fg3),
               ]),
+              if (st == 'rejected' && str(t['rejectReason']).isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(str(t['rejectReason']), style: const TextStyle(fontSize: 12.5, color: C.danger)),
+              ],
             ] else if (str(t['note']).isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(str(t['note']), style: const TextStyle(fontSize: 12.5, color: C.fg2)),
@@ -162,9 +168,13 @@ class _TxTile extends StatelessWidget {
           // Flexible so a long currency word (e.g. Bengali) shrinks or wraps instead of overflowing a narrow phone.
           Flexible(
             child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              FittedBox(fit: BoxFit.scaleDown, child: Text('${d >= 0 ? '+' : '−'} ${_sar(d.abs())}', style: TextStyle(fontWeight: FontWeight.w800, color: d >= 0 ? C.success : C.danger))),
-              const SizedBox(height: 2),
-              Text('${tr('cuBalance')} ${_sar(runBal)}', textAlign: TextAlign.end, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11.5, color: C.fg3)),
+              if (st != 'approved')
+                FittedBox(fit: BoxFit.scaleDown, child: Text('(${_sar(amountOf(t))})', style: const TextStyle(fontWeight: FontWeight.w700, color: C.fg3)))
+              else ...[
+                FittedBox(fit: BoxFit.scaleDown, child: Text('${d >= 0 ? '+' : '−'} ${_sar(d.abs())}', style: TextStyle(fontWeight: FontWeight.w800, color: d >= 0 ? C.success : C.danger))),
+                const SizedBox(height: 2),
+                Text('${tr('cuBalance')} ${_sar(runBal)}', textAlign: TextAlign.end, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11.5, color: C.fg3)),
+              ],
             ]),
           ),
         ]),
